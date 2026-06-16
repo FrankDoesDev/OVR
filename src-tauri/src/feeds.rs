@@ -32,8 +32,8 @@ fn fetch_rss(url: &str) -> Result<Vec<FeedItem>, String> {
         let description = entry.summary.as_ref().map(|s| s.content.clone())
             .or_else(|| entry.content.as_ref().and_then(|c| {
                 match &c.body {
-                    Some(feed_rs::model::Content::Html(s)) => Some(s.clone()),
-                    Some(feed_rs::model::Content::Text(s)) => Some(s.clone()),
+                    Some(feed_rs::model::MediaType::Html(s)) => Some(s.clone()),
+                    Some(feed_rs::model::MediaType::Text(s)) => Some(s.clone()),
                     _ => None,
                 }
             }));
@@ -203,7 +203,7 @@ fn get_hour_label() -> String {
 
 fn dedup(items: Vec<FeedItem>) -> Vec<FeedItem> {
     let mut seen = std::collections::HashSet::new();
-    items.into_filter(|item| {
+    items.into_iter().filter(|item| {
         let key = if item.url.is_empty() { item.title.clone() } else { item.url.clone() };
         seen.insert(key)
     }).collect()

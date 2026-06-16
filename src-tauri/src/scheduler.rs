@@ -33,7 +33,7 @@ impl Scheduler {
                     s.map(|s| s.refresh_interval_hours).unwrap_or(6)
                 };
 
-                let interval_secs = interval * 3600;
+                let interval_secs = (interval as u64) * 3600;
 
                 // Generate on first run
                 {
