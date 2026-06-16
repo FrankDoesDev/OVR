@@ -31,11 +31,7 @@ fn fetch_rss(url: &str) -> Result<Vec<FeedItem>, String> {
             .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
         let description = entry.summary.as_ref().map(|s| s.content.clone())
             .or_else(|| entry.content.as_ref().and_then(|c| {
-                match &c.body {
-                    Some(feed_rs::model::MediaType::Html(s)) => Some(s.clone()),
-                    Some(feed_rs::model::MediaType::Text(s)) => Some(s.clone()),
-                    _ => None,
-                }
+                c.body.clone()
             }));
 
         Some(FeedItem {
