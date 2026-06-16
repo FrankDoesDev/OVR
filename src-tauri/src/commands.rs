@@ -1,11 +1,11 @@
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use tauri::State;
 
 use crate::storage::{self, UserSettings, Digest, ArchiveEntry, TestResult, TestItem};
 use crate::feeds;
 
 pub struct AppState {
-    pub settings: Mutex<UserSettings>,
+    pub settings: Arc<Mutex<UserSettings>>,
 }
 
 // ─── Settings Commands ───

@@ -11,9 +11,9 @@ pub struct Scheduler {
 }
 
 impl Scheduler {
-    pub fn new(settings: UserSettings) -> Self {
+    pub fn new(settings: Arc<Mutex<UserSettings>>) -> Self {
         Self {
-            settings: Arc::new(Mutex::new(settings)),
+            settings,
             last_digest: Arc::new(Mutex::new(None)),
         }
     }

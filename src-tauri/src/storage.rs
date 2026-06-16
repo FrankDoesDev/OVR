@@ -308,13 +308,14 @@ pub fn list_archives() -> Vec<ArchiveEntry> {
                 return None;
             }
             let stripped = name.strip_prefix("digest-")?.strip_suffix(".json")?;
-            let parts: Vec<&str> = stripped.splitn(2, '-').collect();
-            if parts.len() < 2 { return None; }
-            let date = parts[0];
-            let hour = parts[1];
+            // Format: YYYY-MM-DD-HH
+            let parts: Vec<&str> = stripped.splitn(4, '-').collect();
+            if parts.len() < 4 { return None; }
+            let date = format!("{}-{}-{}", parts[0], parts[1], parts[2]);
+            let hour = parts[3].to_string();
             Some(ArchiveEntry {
-                date: date.to_string(),
-                hour: hour.to_string(),
+                date,
+                hour,
                 path: name,
             })
         })

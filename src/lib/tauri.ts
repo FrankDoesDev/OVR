@@ -77,7 +77,7 @@ export interface TestResult {
 // ─── Environment Detection ───
 
 function isTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI__' in window;
+  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 }
 
 // Tauri is available at build time (static import), but invoke is a no-op outside Tauri.
@@ -165,7 +165,16 @@ export async function deleteCategory(id: string): Promise<void> {
 export async function addSource(data: { name: string; url: string; categoryId: string; type?: string; icon?: string; enabled?: boolean; transformType?: string }): Promise<StoredSource> {
   const invoke = await getInvoke();
   if (invoke) {
-    return invoke('add_source', data) as Promise<StoredSource>;
+    // Tauri maps Rust source_type -> JS sourceType
+    return invoke('add_source', {
+      name: data.name,
+      url: data.url,
+      categoryId: data.categoryId,
+      sourceType: data.type,
+      icon: data.icon,
+      enabled: data.enabled,
+      transformType: data.transformType,
+    }) as Promise<StoredSource>;
   }
   const res = await apiFetch<StoredSource>('/api/settings/sources', {
     method: 'POST',

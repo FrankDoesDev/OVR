@@ -1,4 +1,4 @@
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 mod commands;
 mod feeds;
@@ -10,14 +10,15 @@ pub use commands::AppState;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let settings = storage::load_settings();
+    let shared_settings = Arc::new(Mutex::new(settings));
 
-    let sched = scheduler::Scheduler::new(settings.clone());
+    let sched = scheduler::Scheduler::new(Arc::clone(&shared_settings));
     sched.start();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .manage(AppState {
-            settings: Mutex::new(settings),
+            settings: shared_settings,
         })
         .invoke_handler(tauri::generate_handler![
             commands::get_settings,
