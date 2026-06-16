@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getLatestDigest, type Digest, type Category } from '@/lib/tauri'
+import { getLatestDigest, generateNow, type Digest, type Category } from '@/lib/tauri'
 import DigestSection from '@/components/DigestSection'
 import LastUpdated from '@/components/LastUpdated'
 import FeedCard from '@/components/FeedCard'
@@ -17,18 +17,37 @@ type PageView =
 export default function HomeLoader({ onNavigate }: { onNavigate: (v: PageView) => void }) {
   const [digest, setDigest] = useState<Digest | null>(null)
   const [loading, setLoading] = useState(true)
+  const [generating, setGenerating] = useState(false)
 
   useEffect(() => {
-    getLatestDigest().then((d) => {
-      setDigest(d)
+    getLatestDigest().then(async (d) => {
+      if (d) {
+        setDigest(d)
+        setLoading(false)
+      } else {
+        // No digest exists — generate one now
+        setGenerating(true)
+        try {
+          const newDigest = await generateNow()
+          setDigest(newDigest)
+        } catch (e) {
+          console.error('[Home] Failed to generate digest:', e)
+        }
+        setGenerating(false)
+        setLoading(false)
+      }
+    }).catch((e) => {
+      console.error('[Home] Failed to load digest:', e)
       setLoading(false)
-    }).catch(() => setLoading(false))
+    })
   }, [])
 
-  if (loading) {
+  if (loading || generating) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <p className="text-sm text-[var(--text-tertiary)] font-mono">Loading...</p>
+        <p className="text-sm text-[var(--text-tertiary)] font-mono">
+          {generating ? 'Generating first digest...' : 'Loading...'}
+        </p>
       </div>
     )
   }
@@ -40,8 +59,14 @@ export default function HomeLoader({ onNavigate }: { onNavigate: (v: PageView) =
           OVR
         </h1>
         <p className="text-sm text-[var(--text-tertiary)] mb-8 max-w-md leading-relaxed">
-          No digest has been generated yet. The scheduler will produce the first one automatically.
+          Failed to generate digest. Check your internet connection and try again.
         </p>
+        <button
+          onClick={() => { setLoading(true); window.location.reload() }}
+          className="px-4 py-2 text-sm rounded-lg border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all"
+        >
+          Retry
+        </button>
       </div>
     )
   }

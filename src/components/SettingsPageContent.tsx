@@ -31,12 +31,13 @@ export default function SettingsPageContent({ onNavigate, onRefreshCategories }:
     fetchSettings()
   }, [])
 
-  async function fetchSettings() {
-    setLoading(true)
+  async function fetchSettings(isRefetch = false) {
+    if (!isRefetch) setLoading(true)
     try {
       const s = await tauri.getSettings()
       setSettings(s)
-    } catch {
+    } catch (e) {
+      console.error('[Settings] Failed to load settings:', e)
       setMessage('Failed to load settings')
     }
     setLoading(false)
@@ -60,21 +61,21 @@ export default function SettingsPageContent({ onNavigate, onRefreshCategories }:
     try {
       await tauri.addCategory(newCategory.trim())
       setNewCategory('')
-      await fetchSettings()
+      await fetchSettings(true)
       onRefreshCategories?.()
     } catch {}
   }
 
   async function updateCategory(id: string, data: { name?: string; slug?: string; enabled?: boolean; order?: number }) {
     await tauri.updateCategory(id, data)
-    await fetchSettings()
+    await fetchSettings(true)
     onRefreshCategories?.()
   }
 
   async function deleteCategory(id: string) {
     if (!confirm('Delete this category? Sources will be reassigned to the first category.')) return
     await tauri.deleteCategory(id)
-    await fetchSettings()
+    await fetchSettings(true)
     onRefreshCategories?.()
   }
 
@@ -91,28 +92,28 @@ export default function SettingsPageContent({ onNavigate, onRefreshCategories }:
     })
     const newSettings = { ...settings, categories: updated }
     await tauri.saveSettings(newSettings)
-    await fetchSettings()
+    await fetchSettings(true)
     onRefreshCategories?.()
   }
 
   async function toggleSource(id: string, enabled: boolean) {
     await tauri.updateSource(id, { enabled })
-    await fetchSettings()
+    await fetchSettings(true)
   }
 
   async function renameSource(id: string, name: string) {
     await tauri.updateSource(id, { name })
-    await fetchSettings()
+    await fetchSettings(true)
   }
 
   async function moveSource(id: string, categoryId: string) {
     await tauri.updateSource(id, { categoryId })
-    await fetchSettings()
+    await fetchSettings(true)
   }
 
   async function deleteSource(id: string) {
     await tauri.deleteSource(id)
-    await fetchSettings()
+    await fetchSettings(true)
   }
 
   async function handleTest() {
@@ -135,7 +136,7 @@ export default function SettingsPageContent({ onNavigate, onRefreshCategories }:
       await tauri.addSource(newSource)
       setNewSource({ name: '', url: '', categoryId: settings?.categories[0]?.id || '', type: 'rss', icon: '📡', transformType: 'rss' })
       setTestResult(null)
-      await fetchSettings()
+      await fetchSettings(true)
     } catch {}
   }
 
