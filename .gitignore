@@ -33,9 +33,22 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# generated digest data
+/data/
+
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# server logs
+*.log
+
+# tauri
+src-tauri/target/
+src-tauri/Cargo.lock
+
+# api backup (from build script)
+.api-backup/
