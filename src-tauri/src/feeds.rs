@@ -72,6 +72,7 @@ fn fetch_rss(url: &str) -> Result<Vec<FeedItem>, String> {
             image_url,
             icon: None,
             author: entry.authors.first().map(|a| a.name.clone()),
+            source_type: String::new(),
         })
     }).collect();
 
@@ -160,6 +161,7 @@ fn extract_with_mapping(data: &Value, mapping: &crate::storage::JsonMapping) -> 
             image_url,
             icon: None,
             author: None,
+            source_type: String::new(),
         })
     }).collect()
 }
@@ -190,6 +192,7 @@ fn extract_generic_json(data: &Value) -> Vec<FeedItem> {
             image_url: item.get("imageUrl").or(item.get("thumbnail")).and_then(|v| v.as_str()).map(|s| s.to_string()),
             icon: None,
             author: item.get("author").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            source_type: String::new(),
         })
     }).collect()
 }
@@ -205,6 +208,7 @@ fn fetch_source(source: &StoredSource) -> Result<Vec<FeedItem>, String> {
     for item in &mut items {
         item.source = source.name.clone();
         item.category_id = source.category_id.clone();
+        item.source_type = source.transform_type.clone();
         if let Some(icon) = &source.icon {
             item.icon = Some(icon.clone());
         }
@@ -268,6 +272,8 @@ pub fn generate_digest(settings: &UserSettings) -> Result<Digest, String> {
     }
     let mut source_counts: HashMap<String, u32> = HashMap::new();
 
+    let cutoff = chrono::Utc::now() - chrono::Duration::days(settings.max_item_age_days as i64);
+
     for (source, result) in active_sources.iter().zip(results.iter()) {
         if let Ok(items) = result {
             let cat = enabled_cats.iter().find(|c| c.id == source.category_id);
@@ -289,6 +295,11 @@ pub fn generate_digest(settings: &UserSettings) -> Result<Digest, String> {
     for section in sections.values_mut() {
         let mut deduped = dedup(std::mem::take(section));
         sort_by_date(&mut deduped);
+        deduped.retain(|item| {
+            chrono::DateTime::parse_from_rfc3339(&item.published_at)
+                .map(|dt| dt > cutoff)
+                .unwrap_or(true)
+        });
         *section = deduped;
     }
 

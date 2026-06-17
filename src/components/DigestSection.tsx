@@ -2,6 +2,11 @@
 
 import { FeedItem } from '@/types'
 import FeedCard from './FeedCard'
+import TweetCard from './TweetCard'
+
+function isTweet(item: FeedItem): boolean {
+  return item.sourceType === 'twitter-rss'
+}
 
 export default function DigestSection({
   title,
@@ -21,6 +26,8 @@ export default function DigestSection({
   if (items.length === 0) return null
 
   const displayItems = limit ? items.slice(0, limit) : items
+  const hasTweets = items.some(isTweet)
+  const gridClass = hasTweets ? 'space-y-3' : 'section-grid'
 
   return (
     <div className={`section-wrapper ${sectionClass}`}>
@@ -30,10 +37,14 @@ export default function DigestSection({
         <span className="section-count">{items.length} items</span>
       </div>
 
-      <div className="section-grid">
-        {displayItems.map((item, i) => (
-          <FeedCard key={item.id} item={item} index={i} />
-        ))}
+      <div className={gridClass}>
+        {displayItems.map((item, i) =>
+          isTweet(item) ? (
+            <TweetCard key={item.id} item={item} index={i} />
+          ) : (
+            <FeedCard key={item.id} item={item} index={i} />
+          )
+        )}
       </div>
 
       {limit && items.length > limit && (

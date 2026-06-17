@@ -11,6 +11,7 @@ export interface FeedItem {
   imageUrl?: string;
   icon?: string;
   author?: string;
+  sourceType: string;
 }
 
 export interface Category {
@@ -48,6 +49,7 @@ export interface UserSettings {
   maxItemsPerSource: number;
   refreshIntervalHours: number;
   homepagePreviewCount: number;
+  maxItemAgeDays: number;
 }
 
 export interface Digest {

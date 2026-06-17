@@ -22,6 +22,8 @@ pub struct FeedItem {
     pub image_url: Option<String>,
     pub icon: Option<String>,
     pub author: Option<String>,
+    #[serde(rename = "sourceType")]
+    pub source_type: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -76,6 +78,8 @@ pub struct UserSettings {
     pub refresh_interval_hours: u32,
     #[serde(rename = "homepagePreviewCount")]
     pub homepage_preview_count: u32,
+    #[serde(rename = "maxItemAgeDays")]
+    pub max_item_age_days: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -258,6 +262,7 @@ fn build_seed_settings() -> UserSettings {
         max_items_per_source: 30,
         refresh_interval_hours: 6,
         homepage_preview_count: 4,
+        max_item_age_days: 2,
     }
 }
 

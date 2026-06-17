@@ -38,6 +38,7 @@ function buildSeed(): UserSettings {
     maxItemsPerSource: 30,
     refreshIntervalHours: 6,
     homepagePreviewCount: 4,
+    maxItemAgeDays: 2,
   }
 }
 

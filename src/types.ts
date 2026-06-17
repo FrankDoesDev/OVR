@@ -9,6 +9,7 @@ export interface FeedItem {
   imageUrl?: string
   icon?: string
   author?: string
+  sourceType: string
 }
 
 export interface Digest {
@@ -65,4 +66,5 @@ export interface UserSettings {
   maxItemsPerSource: number
   refreshIntervalHours: number
   homepagePreviewCount: number
+  maxItemAgeDays: number
 }

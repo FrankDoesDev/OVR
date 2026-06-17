@@ -17,6 +17,7 @@ function rssTransform(source: FeedSource) {
       categoryId: source.categoryId,
       publishedAt: item.pubDate || item.isoDate || new Date().toISOString(),
       description: item.contentSnippet || item.content || '',
+      sourceType: source.transformType,
     }))
 }
 
@@ -34,6 +35,7 @@ function jsonTransform(source: FeedSource) {
       publishedAt: getByPath(item, m?.datePath) || new Date().toISOString(),
       description: getByPath(item, m?.descriptionPath) || '',
       imageUrl: getByPath(item, m?.imageUrlPath) || undefined,
+      sourceType: source.transformType,
     }))
   }
 }
@@ -49,6 +51,7 @@ function epicFreeGamesTransform(source: FeedSource) {
       publishedAt: new Date().toISOString(),
       description: game.description || 'Free on Epic Games Store',
       imageUrl: game.keyImages?.[0]?.url,
+      sourceType: source.transformType,
     }))
 }
 
@@ -63,6 +66,7 @@ function hfModelsTransform(source: FeedSource) {
       publishedAt: model.createdAt || new Date().toISOString(),
       description: `Downloads: ${(model.downloads || 0).toLocaleString()} · Likes: ${(model.likes || 0).toLocaleString()}`,
       author: model.author,
+      sourceType: source.transformType,
     }))
 }
 

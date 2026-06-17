@@ -97,7 +97,8 @@ export default function HomeLoader({ onNavigate }: { onNavigate: (v: PageView) =
 
   const enabledCats = digest.categories.filter((c) => c.enabled)
   const allItems = enabledCats.flatMap((cat) => digest.sections[cat.slug] || [])
-  const topItems = allItems.sort((a, b) => {
+  const articleItems = allItems.filter((i) => i.sourceType !== 'twitter-rss')
+  const topItems = articleItems.sort((a, b) => {
     const aImg = a.imageUrl ? 1 : 0
     const bImg = b.imageUrl ? 1 : 0
     if (bImg !== aImg) return bImg - aImg
