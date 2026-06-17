@@ -63,57 +63,87 @@ export default function SettingsPageContent({ onNavigate, onRefreshCategories }:
       setNewCategory('')
       await fetchSettings(true)
       onRefreshCategories?.()
-    } catch {}
+    } catch (e) {
+      console.error('[Settings] addCategory failed:', e)
+    }
   }
 
   async function updateCategory(id: string, data: { name?: string; slug?: string; enabled?: boolean; order?: number }) {
-    await tauri.updateCategory(id, data)
-    await fetchSettings(true)
-    onRefreshCategories?.()
+    try {
+      await tauri.updateCategory(id, data)
+      await fetchSettings(true)
+      onRefreshCategories?.()
+    } catch (e) {
+      console.error('[Settings] updateCategory failed:', e)
+    }
   }
 
   async function deleteCategory(id: string) {
     if (!confirm('Delete this category? Sources will be reassigned to the first category.')) return
-    await tauri.deleteCategory(id)
-    await fetchSettings(true)
-    onRefreshCategories?.()
+    try {
+      await tauri.deleteCategory(id)
+      await fetchSettings(true)
+      onRefreshCategories?.()
+    } catch (e) {
+      console.error('[Settings] deleteCategory failed:', e)
+    }
   }
 
   async function moveCategory(id: string, dir: -1 | 1) {
     if (!settings) return
-    const cats = settings.categories
-    const idx = cats.findIndex((c) => c.id === id)
-    const newIdx = idx + dir
-    if (newIdx < 0 || newIdx >= cats.length) return
-    const updated = cats.map((c, i) => {
-      if (i === idx) return { ...c, order: newIdx }
-      if (i === newIdx) return { ...c, order: idx }
-      return c
-    })
-    const newSettings = { ...settings, categories: updated }
-    await tauri.saveSettings(newSettings)
-    await fetchSettings(true)
-    onRefreshCategories?.()
+    try {
+      const cats = settings.categories
+      const idx = cats.findIndex((c) => c.id === id)
+      const newIdx = idx + dir
+      if (newIdx < 0 || newIdx >= cats.length) return
+      const updated = cats.map((c, i) => {
+        if (i === idx) return { ...c, order: newIdx }
+        if (i === newIdx) return { ...c, order: idx }
+        return c
+      })
+      const newSettings = { ...settings, categories: updated }
+      await tauri.saveSettings(newSettings)
+      await fetchSettings(true)
+      onRefreshCategories?.()
+    } catch (e) {
+      console.error('[Settings] moveCategory failed:', e)
+    }
   }
 
   async function toggleSource(id: string, enabled: boolean) {
-    await tauri.updateSource(id, { enabled })
-    await fetchSettings(true)
+    try {
+      await tauri.updateSource(id, { enabled })
+      await fetchSettings(true)
+    } catch (e) {
+      console.error('[Settings] toggleSource failed:', e)
+    }
   }
 
   async function renameSource(id: string, name: string) {
-    await tauri.updateSource(id, { name })
-    await fetchSettings(true)
+    try {
+      await tauri.updateSource(id, { name })
+      await fetchSettings(true)
+    } catch (e) {
+      console.error('[Settings] renameSource failed:', e)
+    }
   }
 
   async function moveSource(id: string, categoryId: string) {
-    await tauri.updateSource(id, { categoryId })
-    await fetchSettings(true)
+    try {
+      await tauri.updateSource(id, { categoryId })
+      await fetchSettings(true)
+    } catch (e) {
+      console.error('[Settings] moveSource failed:', e)
+    }
   }
 
   async function deleteSource(id: string) {
-    await tauri.deleteSource(id)
-    await fetchSettings(true)
+    try {
+      await tauri.deleteSource(id)
+      await fetchSettings(true)
+    } catch (e) {
+      console.error('[Settings] deleteSource failed:', e)
+    }
   }
 
   async function handleTest() {

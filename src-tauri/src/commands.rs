@@ -149,7 +149,10 @@ pub fn list_archives() -> Result<Vec<ArchiveEntry>, String> {
 
 #[tauri::command]
 pub fn generate_now(state: State<AppState>) -> Result<Digest, String> {
-    let settings = state.settings.lock().map_err(|e| e.to_string())?;
+    let settings = {
+        let s = state.settings.lock().map_err(|e| e.to_string())?;
+        s.clone()
+    };
     let digest = feeds::generate_digest(&settings)?;
     storage::save_digest(&digest)?;
     Ok(digest)

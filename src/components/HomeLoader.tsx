@@ -18,6 +18,7 @@ export default function HomeLoader({ onNavigate }: { onNavigate: (v: PageView) =
   const [digest, setDigest] = useState<Digest | null>(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
     getLatestDigest().then(async (d) => {
@@ -25,19 +26,22 @@ export default function HomeLoader({ onNavigate }: { onNavigate: (v: PageView) =
         setDigest(d)
         setLoading(false)
       } else {
-        // No digest exists — generate one now
         setGenerating(true)
         try {
           const newDigest = await generateNow()
           setDigest(newDigest)
         } catch (e) {
-          console.error('[Home] Failed to generate digest:', e)
+          const msg = typeof e === 'string' ? e : e instanceof Error ? e.message : JSON.stringify(e)
+          console.error('[Home] Failed to generate digest:', msg)
+          setErrorMessage(msg)
         }
         setGenerating(false)
         setLoading(false)
       }
     }).catch((e) => {
-      console.error('[Home] Failed to load digest:', e)
+      const msg = typeof e === 'string' ? e : e instanceof Error ? e.message : JSON.stringify(e)
+      console.error('[Home] Failed to load digest:', msg)
+      setErrorMessage(msg)
       setLoading(false)
     })
   }, [])
@@ -58,11 +62,16 @@ export default function HomeLoader({ onNavigate }: { onNavigate: (v: PageView) =
         <h1 className="text-4xl font-serif font-bold tracking-tight text-[var(--text-primary)] leading-[1.7] mb-6">
           OVR
         </h1>
-        <p className="text-sm text-[var(--text-tertiary)] mb-8 max-w-md leading-relaxed">
-          Failed to generate digest. Check your internet connection and try again.
+        <p className="text-sm text-[var(--text-tertiary)] mb-2 max-w-md leading-relaxed">
+          Failed to generate digest.
         </p>
+        {errorMessage && (
+          <p className="text-xs text-red-500 mb-6 max-w-md font-mono leading-relaxed">
+            {errorMessage}
+          </p>
+        )}
         <button
-          onClick={() => { setLoading(true); window.location.reload() }}
+          onClick={() => { setErrorMessage(null); setLoading(true); window.location.reload() }}
           className="px-4 py-2 text-sm rounded-lg border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all"
         >
           Retry

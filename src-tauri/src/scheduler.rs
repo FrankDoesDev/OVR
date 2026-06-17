@@ -27,49 +27,53 @@ impl Scheduler {
         let last_digest = Arc::clone(&self.last_digest);
 
         thread::spawn(move || {
-            loop {
-                let interval = {
+            let interval = {
+                let s = settings.lock().ok();
+                s.map(|s| s.refresh_interval_hours).unwrap_or(6)
+            };
+
+            let interval_secs = (interval as u64) * 3600;
+
+            // Generate on first run
+            {
+                let settings_clone = {
                     let s = settings.lock().ok();
-                    s.map(|s| s.refresh_interval_hours).unwrap_or(6)
+                    s.map(|s| s.clone())
                 };
-
-                let interval_secs = (interval as u64) * 3600;
-
-                // Generate on first run
-                {
-                    let s = settings.lock().ok();
-                    if let Some(s) = s {
-                        match feeds::generate_digest(&s) {
-                            Ok(digest) => {
-                                let _ = storage::save_digest(&digest);
-                                if let Ok(mut last) = last_digest.lock() {
-                                    *last = Some(digest);
-                                }
-                                eprintln!("[Scheduler] Initial digest generated");
+                if let Some(s) = settings_clone {
+                    match feeds::generate_digest(&s) {
+                        Ok(digest) => {
+                            let _ = storage::save_digest(&digest);
+                            if let Ok(mut last) = last_digest.lock() {
+                                *last = Some(digest);
                             }
-                            Err(e) => {
-                                eprintln!("[Scheduler] Failed to generate digest: {}", e);
-                            }
+                            eprintln!("[Scheduler] Initial digest generated");
+                        }
+                        Err(e) => {
+                            eprintln!("[Scheduler] Failed to generate digest: {}", e);
                         }
                     }
                 }
+            }
 
-                // Sleep and regenerate
-                loop {
-                    thread::sleep(Duration::from_secs(interval_secs));
+            // Sleep and regenerate
+            loop {
+                thread::sleep(Duration::from_secs(interval_secs));
+                let settings_clone = {
                     let s = settings.lock().ok();
-                    if let Some(s) = s {
-                        match feeds::generate_digest(&s) {
-                            Ok(digest) => {
-                                let _ = storage::save_digest(&digest);
-                                if let Ok(mut last) = last_digest.lock() {
-                                    *last = Some(digest);
-                                }
-                                eprintln!("[Scheduler] Digest generated");
+                    s.map(|s| s.clone())
+                };
+                if let Some(s) = settings_clone {
+                    match feeds::generate_digest(&s) {
+                        Ok(digest) => {
+                            let _ = storage::save_digest(&digest);
+                            if let Ok(mut last) = last_digest.lock() {
+                                *last = Some(digest);
                             }
-                            Err(e) => {
-                                eprintln!("[Scheduler] Digest generation failed: {}", e);
-                            }
+                            eprintln!("[Scheduler] Digest generated");
+                        }
+                        Err(e) => {
+                            eprintln!("[Scheduler] Digest generation failed: {}", e);
                         }
                     }
                 }
