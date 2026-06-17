@@ -9,6 +9,32 @@ const USER_AGENT: &str = "OVR-daily-digest/1.0";
 
 // ─── RSS/Atom Fetching ───
 
+fn extract_image(entry: &feed_rs::model::Entry) -> Option<String> {
+    // 1. Media content (from media:content elements)
+    for media in &entry.media {
+        for content in &media.content {
+            if let Some(url) = &content.url {
+                return Some(url.to_string());
+            }
+        }
+        // 2. Thumbnails (from media:thumbnail elements)
+        if let Some(thumb) = media.thumbnails.first() {
+            return Some(thumb.image.uri.clone());
+        }
+    }
+    // 3. Enclosure links with image MIME type
+    for link in &entry.links {
+        if link.rel.as_deref() == Some("enclosure") {
+            if let Some(ref mt) = link.media_type {
+                if mt.starts_with("image") {
+                    return Some(link.href.clone());
+                }
+            }
+        }
+    }
+    None
+}
+
 fn fetch_rss(url: &str) -> Result<Vec<FeedItem>, String> {
     let client = reqwest::blocking::Client::builder()
         .user_agent(USER_AGENT)
@@ -33,6 +59,7 @@ fn fetch_rss(url: &str) -> Result<Vec<FeedItem>, String> {
             .or_else(|| entry.content.as_ref().and_then(|c| {
                 c.body.clone()
             }));
+        let image_url = extract_image(&entry);
 
         Some(FeedItem {
             id,
@@ -42,7 +69,7 @@ fn fetch_rss(url: &str) -> Result<Vec<FeedItem>, String> {
             category_id: String::new(),
             published_at: published,
             description,
-            image_url: None,
+            image_url,
             icon: None,
             author: entry.authors.first().map(|a| a.name.clone()),
         })

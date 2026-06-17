@@ -1,15 +1,12 @@
 const sharp = require('sharp');
 const path = require('path');
+const fs = require('fs');
+const toIco = require('to-ico');
 
 const svgIcon = `
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <defs>
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&amp;display=swap');
-    </style>
-  </defs>
   <rect width="512" height="512" rx="80" fill="#161514"/>
-  <text x="256" y="290" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="180" font-weight="400" fill="#efeee8" letter-spacing="8">OVR</text>
+  <text x="256" y="256" dominant-baseline="central" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="180" font-weight="400" fill="#efeee8" letter-spacing="8">OVR</text>
 </svg>`;
 
 async function generateIcons() {
@@ -42,6 +39,15 @@ async function generateIcons() {
     .png()
     .toFile(path.join(iconsDir, 'icon_32.png'));
   console.log('Generated icon_32.png');
+
+  // Generate .ico from 256x256 PNG
+  const buf = await sharp(Buffer.from(svgIcon))
+    .resize(256, 256)
+    .png()
+    .toBuffer();
+  const icoBuf = await toIco([buf]);
+  fs.writeFileSync(path.join(iconsDir, 'icon.ico'), icoBuf);
+  console.log('Generated icon.ico');
 
   console.log('All icons generated!');
 }

@@ -2,7 +2,7 @@
 
 import { Digest } from '@/types'
 
-export default function LastUpdated({ digest }: { digest: Digest | null }) {
+export default function LastUpdated({ digest, onRefresh, refreshing }: { digest: Digest | null; onRefresh?: () => void; refreshing?: boolean }) {
   if (!digest) return null
 
   const time = new Date(digest.generatedAt)
@@ -16,19 +16,7 @@ export default function LastUpdated({ digest }: { digest: Digest | null }) {
     : digest.hour === '12' ? 'Noon'
     : '6 PM'
 
-  const totalItems =
-    digest.sections.gaming.length +
-    digest.sections.tech.length +
-    digest.sections.politics.length
-
-  const handleRefresh = async () => {
-    try {
-      await fetch('/api/digest', { method: 'POST' })
-      window.location.reload()
-    } catch {
-      // ignore
-    }
-  }
+  const totalItems = Object.values(digest.sections).reduce((sum, items) => sum + items.length, 0)
 
   return (
     <div className="flex items-center justify-between text-xs text-[var(--text-tertiary)] pb-4 border-b border-[var(--border-primary)]">
@@ -39,10 +27,11 @@ export default function LastUpdated({ digest }: { digest: Digest | null }) {
       <div className="flex items-center gap-3">
         <span className="text-[var(--text-tertiary)]">{totalItems} items</span>
         <button
-          onClick={handleRefresh}
-          className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-[var(--text-tertiary)] border border-[var(--border-primary)] rounded-md hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all"
+          onClick={onRefresh}
+          disabled={refreshing}
+          className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-[var(--text-tertiary)] border border-[var(--border-primary)] rounded-md hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all disabled:opacity-50"
         >
-          Refresh
+          {refreshing ? 'Generating...' : 'Refresh'}
         </button>
       </div>
     </div>

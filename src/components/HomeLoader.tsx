@@ -18,6 +18,7 @@ export default function HomeLoader({ onNavigate }: { onNavigate: (v: PageView) =
   const [digest, setDigest] = useState<Digest | null>(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
@@ -45,6 +46,20 @@ export default function HomeLoader({ onNavigate }: { onNavigate: (v: PageView) =
       setLoading(false)
     })
   }, [])
+
+  const handleManualRefresh = async () => {
+    setRefreshing(true)
+    setErrorMessage(null)
+    try {
+      const newDigest = await generateNow()
+      setDigest(newDigest)
+    } catch (e) {
+      const msg = typeof e === 'string' ? e : e instanceof Error ? e.message : JSON.stringify(e)
+      console.error('[Home] Refresh failed:', msg)
+      setErrorMessage(msg)
+    }
+    setRefreshing(false)
+  }
 
   if (loading || generating) {
     return (
@@ -108,7 +123,7 @@ export default function HomeLoader({ onNavigate }: { onNavigate: (v: PageView) =
         </div>
 
         <div className="mt-1 mb-6">
-          <LastUpdated digest={digest} />
+          <LastUpdated digest={digest} onRefresh={handleManualRefresh} refreshing={refreshing} />
         </div>
 
         {topItems.length > 0 && (
