@@ -2,29 +2,20 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-use crate::storage::{self, UserSettings, Digest};
+use crate::storage::{self, UserSettings};
 use crate::feeds;
 
 pub struct Scheduler {
     settings: Arc<Mutex<UserSettings>>,
-    last_digest: Arc<Mutex<Option<Digest>>>,
 }
 
 impl Scheduler {
     pub fn new(settings: Arc<Mutex<UserSettings>>) -> Self {
-        Self {
-            settings,
-            last_digest: Arc::new(Mutex::new(None)),
-        }
-    }
-
-    pub fn get_last_digest(&self) -> Option<Digest> {
-        self.last_digest.lock().ok().and_then(|d| d.clone())
+        Self { settings }
     }
 
     pub fn start(&self) {
         let settings = Arc::clone(&self.settings);
-        let last_digest = Arc::clone(&self.last_digest);
 
         thread::spawn(move || {
             let interval = {
@@ -44,9 +35,6 @@ impl Scheduler {
                     match feeds::generate_digest(&s) {
                         Ok(digest) => {
                             let _ = storage::save_digest(&digest);
-                            if let Ok(mut last) = last_digest.lock() {
-                                *last = Some(digest);
-                            }
                             eprintln!("[Scheduler] Initial digest generated");
                         }
                         Err(e) => {
@@ -56,7 +44,6 @@ impl Scheduler {
                 }
             }
 
-            // Sleep and regenerate
             loop {
                 thread::sleep(Duration::from_secs(interval_secs));
                 let settings_clone = {
@@ -67,9 +54,6 @@ impl Scheduler {
                     match feeds::generate_digest(&s) {
                         Ok(digest) => {
                             let _ = storage::save_digest(&digest);
-                            if let Ok(mut last) = last_digest.lock() {
-                                *last = Some(digest);
-                            }
                             eprintln!("[Scheduler] Digest generated");
                         }
                         Err(e) => {

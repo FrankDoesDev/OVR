@@ -30,9 +30,9 @@ export interface Category {
 }
 
 export interface JsonMapping {
-  itemsPath: string
-  titlePath: string
-  urlPath: string
+  itemsPath?: string
+  titlePath?: string
+  urlPath?: string
   descriptionPath?: string
   datePath?: string
   imageUrlPath?: string
@@ -50,16 +50,6 @@ export interface StoredSource {
   jsonMapping?: JsonMapping
 }
 
-export interface FeedSource extends StoredSource {
-  transform: (data: any) => FeedItem[]
-}
-
-export interface DigestArchive {
-  date: string
-  hour: string
-  path: string
-}
-
 export interface UserSettings {
   categories: Category[]
   sources: StoredSource[]
@@ -67,4 +57,32 @@ export interface UserSettings {
   refreshIntervalHours: number
   homepagePreviewCount: number
   maxItemAgeDays: number
+}
+
+export interface ArchiveEntry {
+  date: string
+  hour: string
+  path: string
+}
+
+export interface TestResult {
+  success: boolean
+  type?: string
+  title?: string
+  items: { index: number; title: string; url: string }[]
+  error?: string
+  topKeys?: string[]
+}
+
+export type PageView =
+  | { type: "home" }
+  | { type: "category"; slug: string }
+  | { type: "search" }
+  | { type: "settings" }
+  | { type: "archive" }
+  | { type: "archive-date"; date: string; hour: string }
+
+export interface NavCategory {
+  name: string
+  slug: string
 }

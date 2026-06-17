@@ -1,11 +1,8 @@
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
-use chrono::{Local, Datelike, Timelike};
+use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-
-// ─── Types ───
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FeedItem {
@@ -120,10 +117,7 @@ pub struct TestItem {
     pub url: String,
 }
 
-// ─── Data Directory ───
-
 fn get_data_dir() -> PathBuf {
-    // Portable mode: data directory next to the executable
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
             let path = dir.join("data");
@@ -132,7 +126,6 @@ fn get_data_dir() -> PathBuf {
             }
         }
     }
-    // Fallback: OS-specific data directory (guaranteed writable)
     os_data_dir()
 }
 
@@ -179,8 +172,6 @@ fn digest_path(date: &str, hour: &str) -> PathBuf {
     ensure_data_dir().join(digest_file_name(date, hour))
 }
 
-// ─── Seed Defaults ───
-
 fn generate_id() -> String {
     Uuid::new_v4().to_string()
 }
@@ -203,43 +194,40 @@ fn build_seed_settings() -> UserSettings {
     ].into_iter().collect();
 
     let built_in_sources: Vec<(&str, &str, &str, &str, &str)> = vec![
-        // Gaming
-        ("Steam News", "gaming", "🎮", "rss", "https://store.steampowered.com/feeds/news.xml"),
-        ("Epic Free Games", "gaming", "🆓", "api-json", "https://epic-free-games.vercel.app/api/games"),
-        ("IGN", "gaming", "🎯", "rss", "https://www.ign.com/rss/v2/articles/feed/rss"),
-        ("PC Gamer", "gaming", "🖥️", "rss", "https://www.pcgamer.com/rss/feed/rss"),
-        ("Eurogamer", "gaming", "🇪🇺", "rss", "https://www.eurogamer.net/feed/news"),
-        ("PlayStation", "gaming", "▶️", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UC-2Y8dQb0S6DtpxNgAKoJKA"),
-        ("Xbox", "gaming", "✖️", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCjBp_7RuDBUYbd1LegWEJ8g"),
-        // Tech
-        ("OpenAI Blog", "tech", "🤖", "rss", "https://openai.com/news/rss.xml"),
-        ("Anthropic News", "tech", "🧠", "rss", "https://raw.githubusercontent.com/taobojlen/anthropic-rss-feed/main/anthropic_news_rss.xml"),
-        ("Hugging Face Blog", "tech", "🤗", "rss", "https://huggingface.co/blog/feed.xml"),
-        ("HF New Models", "tech", "🏗️", "api-json", "https://huggingface.co/api/models?sort=createdAt&direction=-1&limit=20"),
-        ("Ars Technica AI", "tech", "⚙️", "rss", "https://arstechnica.com/ai/feed/"),
-        ("TechCrunch", "tech", "🔬", "rss", "https://techcrunch.com/feed/"),
-        ("The Verge", "tech", "⚡", "rss", "https://www.theverge.com/rss/index.xml"),
-        ("SpaceX", "tech", "🚀", "rss", "https://www.teslarati.com/feed/"),
-        ("Spaceflight Now", "tech", "🛰️", "rss", "https://spaceflightnow.com/feed/"),
-        ("NASA", "tech", "🌌", "rss", "https://www.nasa.gov/feed/"),
-        ("Raspberry Pi", "tech", "🥧", "rss", "https://www.raspberrypi.com/news/feed/"),
-        ("Hacker News", "tech", "⚓", "rss", "https://hnrss.org/frontpage"),
-        ("Ben's Bites", "tech", "🥪", "rss", "https://www.bensbites.co/feed"),
-        ("The Rundown AI", "tech", "📬", "rss", "https://www.therundown.ai/feed"),
-        ("DeepMind", "tech", "🔬", "rss", "https://deepmind.google/blog/rss.xml"),
-        ("Linus Tech Tips", "tech", "🛠️", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCxHKALcAjHZpGCKW-oSr_zg"),
-        ("TechLinked", "tech", "🔗", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCeeFfhMcJa1kjtfZAGskOCA"),
-        ("t3dotgg", "tech", "💻", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCbRP3c757lWg9M-U7TyEkXA"),
-        ("ThrillSeeker", "tech", "🥽", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCSbdMXOI_3HGiFviLZO6kNA"),
-        // Politics
-        ("Fox News Politics", "politics", "📺", "rss", "https://feeds.foxnews.com/foxnews/politics"),
-        ("NYT Politics", "politics", "📰", "rss", "https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml"),
-        ("The Hill", "politics", "⛰️", "rss", "https://thehill.com/feed/"),
-        ("Politico", "politics", "🏛️", "rss", "https://rss.politico.com/congress.xml"),
-        ("RealClearPolitics", "politics", "📊", "rss", "https://www.realclearpolitics.com/index.xml"),
-        ("CNN Politics", "politics", "📡", "rss", "http://rss.cnn.com/rss/cnn_allpolitics.rss"),
-        ("Asmongold", "politics", "🎭", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCQeRaTukNYft1_6AZPACnog"),
-        ("Sam Hyde", "politics", "🎪", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCfUaZ8Ra7m7BqUEACv2jySw"),
+        ("Steam News", "gaming", "\u{1f3ae}", "rss", "https://store.steampowered.com/feeds/news.xml"),
+        ("Epic Free Games", "gaming", "\u{1f193}", "api-json", "https://epic-free-games.vercel.app/api/games"),
+        ("IGN", "gaming", "\u{1f3af}", "rss", "https://www.ign.com/rss/v2/articles/feed/rss"),
+        ("PC Gamer", "gaming", "\u{1f5a5}\u{fe0f}", "rss", "https://www.pcgamer.com/rss/feed/rss"),
+        ("Eurogamer", "gaming", "\u{1f1ea}\u{1f1fa}", "rss", "https://www.eurogamer.net/feed/news"),
+        ("PlayStation", "gaming", "\u{25b6}\u{fe0f}", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UC-2Y8dQb0S6DtpxNgAKoJKA"),
+        ("Xbox", "gaming", "\u{2716}\u{fe0f}", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCjBp_7RuDBUYbd1LegWEJ8g"),
+        ("OpenAI Blog", "tech", "\u{1f916}", "rss", "https://openai.com/news/rss.xml"),
+        ("Anthropic News", "tech", "\u{1f9e0}", "rss", "https://raw.githubusercontent.com/taobojlen/anthropic-rss-feed/main/anthropic_news_rss.xml"),
+        ("Hugging Face Blog", "tech", "\u{1f917}", "rss", "https://huggingface.co/blog/feed.xml"),
+        ("HF New Models", "tech", "\u{1f3d7}\u{fe0f}", "api-json", "https://huggingface.co/api/models?sort=createdAt&direction=-1&limit=20"),
+        ("Ars Technica AI", "tech", "\u{2699}\u{fe0f}", "rss", "https://arstechnica.com/ai/feed/"),
+        ("TechCrunch", "tech", "\u{1f52c}", "rss", "https://techcrunch.com/feed/"),
+        ("The Verge", "tech", "\u{26a1}", "rss", "https://www.theverge.com/rss/index.xml"),
+        ("SpaceX", "tech", "\u{1f680}", "rss", "https://www.teslarati.com/feed/"),
+        ("Spaceflight Now", "tech", "\u{1f4f0}", "rss", "https://spaceflightnow.com/feed/"),
+        ("NASA", "tech", "\u{1f30c}", "rss", "https://www.nasa.gov/feed/"),
+        ("Raspberry Pi", "tech", "\u{1f967}", "rss", "https://www.raspberrypi.com/news/feed/"),
+        ("Hacker News", "tech", "\u{2693}", "rss", "https://hnrss.org/frontpage"),
+        ("Ben's Bites", "tech", "\u{1f96a}", "rss", "https://www.bensbites.co/feed"),
+        ("The Rundown AI", "tech", "\u{1f4ec}", "rss", "https://www.therundown.ai/feed"),
+        ("DeepMind", "tech", "\u{1f52c}", "rss", "https://deepmind.google/blog/rss.xml"),
+        ("Linus Tech Tips", "tech", "\u{1f6e0}\u{fe0f}", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCxHKALcAjHZpGCKW-oSr_zg"),
+        ("TechLinked", "tech", "\u{1f517}", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCeeFfhMcJa1kjtfZAGskOCA"),
+        ("t3dotgg", "tech", "\u{1f4bb}", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCbRP3c757lWg9M-U7TyEkXA"),
+        ("ThrillSeeker", "tech", "\u{1f97d}", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCSbdMXOI_3HGiFviLZO6kNA"),
+        ("Fox News Politics", "politics", "\u{1f4fa}", "rss", "https://feeds.foxnews.com/foxnews/politics"),
+        ("NYT Politics", "politics", "\u{1f4f0}", "rss", "https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml"),
+        ("The Hill", "politics", "\u{26f0}\u{fe0f}", "rss", "https://thehill.com/feed/"),
+        ("Politico", "politics", "\u{1f3db}\u{fe0f}", "rss", "https://rss.politico.com/congress.xml"),
+        ("RealClearPolitics", "politics", "\u{1f4ca}", "rss", "https://www.realclearpolitics.com/index.xml"),
+        ("CNN Politics", "politics", "\u{1f4e1}", "rss", "http://rss.cnn.com/rss/cnn_allpolitics.rss"),
+        ("Asmongold", "politics", "\u{1f3ad}", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCQeRaTukNYft1_6AZPACnog"),
+        ("Sam Hyde", "politics", "\u{1f3aa}", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCfUaZ8Ra7m7BqUEACv2jySw"),
     ];
 
     let sources: Vec<StoredSource> = built_in_sources.iter().map(|(name, cat_slug, icon, transform, url)| {
@@ -266,8 +254,6 @@ fn build_seed_settings() -> UserSettings {
     }
 }
 
-// ─── Public API ───
-
 pub fn load_settings() -> UserSettings {
     let path = settings_path();
     if !path.exists() {
@@ -279,7 +265,6 @@ pub fn load_settings() -> UserSettings {
         Ok(data) => {
             match serde_json::from_str::<UserSettings>(&data) {
                 Ok(mut s) => {
-                    // Migrate Nitter sources to use "twitter-rss" transform type
                     let mut migrated = false;
                     for source in &mut s.sources {
                         if source.url.contains("nitter.net") && source.transform_type == "rss" {
@@ -356,16 +341,11 @@ pub fn list_archives() -> Vec<ArchiveEntry> {
                 return None;
             }
             let stripped = name.strip_prefix("digest-")?.strip_suffix(".json")?;
-            // Format: YYYY-MM-DD-HH
             let parts: Vec<&str> = stripped.splitn(4, '-').collect();
             if parts.len() < 4 { return None; }
             let date = format!("{}-{}-{}", parts[0], parts[1], parts[2]);
             let hour = parts[3].to_string();
-            Some(ArchiveEntry {
-                date,
-                hour,
-                path: name,
-            })
+            Some(ArchiveEntry { date, hour, path: name })
         })
         .collect();
     entries.sort_by(|a, b| b.date.cmp(&a.date).then(b.hour.cmp(&a.hour)));

@@ -8,8 +8,6 @@ pub struct AppState {
     pub settings: Arc<Mutex<UserSettings>>,
 }
 
-// ─── Settings Commands ───
-
 #[tauri::command]
 pub fn get_settings(state: State<AppState>) -> Result<UserSettings, String> {
     let settings = state.settings.lock().map_err(|e| e.to_string())?;
@@ -23,8 +21,6 @@ pub fn save_settings(state: State<AppState>, settings: UserSettings) -> Result<(
     *current = settings;
     Ok(())
 }
-
-// ─── Category Commands ───
 
 #[tauri::command]
 pub fn add_category(state: State<AppState>, name: String, slug: Option<String>, enabled: Option<bool>) -> Result<storage::Category, String> {
@@ -82,8 +78,6 @@ pub fn delete_category(state: State<AppState>, id: String) -> Result<(), String>
     Ok(())
 }
 
-// ─── Source Commands ───
-
 #[tauri::command]
 pub fn add_source(state: State<AppState>, name: String, url: String, category_id: String, source_type: Option<String>, icon: Option<String>, enabled: Option<bool>, transform_type: Option<String>) -> Result<storage::StoredSource, String> {
     let mut settings = state.settings.lock().map_err(|e| e.to_string())?;
@@ -130,8 +124,6 @@ pub fn delete_source(state: State<AppState>, id: String) -> Result<(), String> {
     Ok(())
 }
 
-// ─── Digest Commands ───
-
 #[tauri::command]
 pub fn get_latest_digest() -> Result<Option<Digest>, String> {
     Ok(storage::load_latest_digest())
@@ -158,18 +150,12 @@ pub fn generate_now(state: State<AppState>) -> Result<Digest, String> {
     Ok(digest)
 }
 
-// ─── Test Command ───
-
 #[tauri::command]
 pub fn test_source(url: String, source_type: String) -> Result<TestResult, String> {
     match feeds::test_source(&url, &source_type) {
         Ok(items) => {
             let test_items: Vec<TestItem> = items.into_iter().take(3).enumerate().map(|(i, item)| {
-                TestItem {
-                    index: i,
-                    title: item.title,
-                    url: item.url,
-                }
+                TestItem { index: i, title: item.title, url: item.url }
             }).collect();
             Ok(TestResult {
                 success: true,

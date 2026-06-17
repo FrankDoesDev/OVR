@@ -1,31 +1,36 @@
-'use client'
-
-import { useState } from 'react'
-import { FeedItem } from '@/types'
+import { useState } from "react";
+import type { FeedItem } from "../types";
 
 function getYouTubeThumbnail(url: string): string | null {
-  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/)
-  return match ? `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg` : null
+  const match = url.match(
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+  );
+  return match
+    ? `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg`
+    : null;
 }
 
 function getTimeAgo(dateStr: string): string {
-  if (!dateStr) return ''
-  const now = Date.now()
-  const date = new Date(dateStr).getTime()
-  if (isNaN(date)) return ''
-  const diff = now - date
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m`
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h`
-  const days = Math.floor(hours / 24)
-  if (days < 30) return `${days}d`
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  if (!dateStr) return "";
+  const now = Date.now();
+  const date = new Date(dateStr).getTime();
+  if (isNaN(date)) return "";
+  const diff = now - date;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d`;
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, '').replace(/&[^;]+;/g, ' ').trim()
+  return html.replace(/<[^>]*>/g, "").replace(/&[^;]+;/g, " ").trim();
 }
 
 export default function FeedCard({
@@ -33,22 +38,25 @@ export default function FeedCard({
   featured = false,
   index = 0,
 }: {
-  item: FeedItem
-  featured?: boolean
-  index?: number
+  item: FeedItem;
+  featured?: boolean;
+  index?: number;
 }) {
-  const ytThumb = getYouTubeThumbnail(item.url)
-  const thumbnail = ytThumb || item.imageUrl
-  const isYouTube = item.url.includes('youtube.com') || item.url.includes('youtu.be')
-  const domain = item.url ? new URL(item.url).hostname.replace('www.', '') : ''
-  const [imgFailed, setImgFailed] = useState(false)
+  const ytThumb = getYouTubeThumbnail(item.url);
+  const thumbnail = ytThumb || item.imageUrl;
+  const isYouTube =
+    item.url.includes("youtube.com") || item.url.includes("youtu.be");
+  const domain = item.url
+    ? new URL(item.url).hostname.replace("www.", "")
+    : "";
+  const [imgFailed, setImgFailed] = useState(false);
 
   return (
     <a
       href={item.url}
       target="_blank"
       rel="noopener noreferrer"
-      className={`feed-card stagger-item ${featured ? 'featured' : ''}`}
+      className={`feed-card stagger-item ${featured ? "featured" : ""}`}
       style={{ animationDelay: `${index * 60}ms` }}
     >
       {thumbnail && !imgFailed ? (
@@ -61,7 +69,7 @@ export default function FeedCard({
             onError={() => setImgFailed(true)}
           />
           <span className="feed-card-badge">
-            {isYouTube ? 'YouTube' : item.source}
+            {isYouTube ? "YouTube" : item.source}
           </span>
         </div>
       ) : item.icon ? (
@@ -91,5 +99,5 @@ export default function FeedCard({
         </div>
       </div>
     </a>
-  )
+  );
 }

@@ -1,11 +1,9 @@
-'use client'
-
-import { FeedItem } from '@/types'
-import FeedCard from './FeedCard'
-import TweetCard from './TweetCard'
+import type { FeedItem } from "../types";
+import FeedCard from "./FeedCard";
+import TweetCard from "./TweetCard";
 
 function isTweet(item: FeedItem): boolean {
-  return item.sourceType === 'twitter-rss'
+  return item.sourceType === "twitter-rss";
 }
 
 export default function DigestSection({
@@ -13,21 +11,19 @@ export default function DigestSection({
   items,
   sectionClass,
   limit,
-  link,
   onSeeAll,
 }: {
-  title: string
-  items: FeedItem[]
-  sectionClass: string
-  limit?: number
-  link?: string
-  onSeeAll?: () => void
+  title: string;
+  items: FeedItem[];
+  sectionClass: string;
+  limit?: number;
+  onSeeAll?: () => void;
 }) {
-  if (items.length === 0) return null
+  if (items.length === 0) return null;
 
-  const displayItems = limit ? items.slice(0, limit) : items
-  const hasTweets = items.some(isTweet)
-  const gridClass = hasTweets ? 'space-y-3' : 'section-grid'
+  const displayItems = limit ? items.slice(0, limit) : items;
+  const hasTweets = items.some(isTweet);
+  const gridClass = hasTweets ? "space-y-3" : "section-grid";
 
   return (
     <div className={`section-wrapper ${sectionClass}`}>
@@ -43,23 +39,19 @@ export default function DigestSection({
             <TweetCard key={item.id} item={item} index={i} />
           ) : (
             <FeedCard key={item.id} item={item} index={i} />
-          )
+          ),
         )}
       </div>
 
       {limit && items.length > limit && (
         <div className="mt-5 text-center">
-          {onSeeAll ? (
+          {onSeeAll && (
             <button onClick={onSeeAll} className="section-link">
               View all {items.length} items &rarr;
             </button>
-          ) : link ? (
-            <a href={link} className="section-link">
-              View all {items.length} items &rarr;
-            </a>
-          ) : null}
+          )}
         </div>
       )}
     </div>
-  )
+  );
 }

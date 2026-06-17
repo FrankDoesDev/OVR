@@ -1,28 +1,23 @@
 use std::collections::HashMap;
-use chrono::{Local, Datelike, Timelike};
+use chrono::{Local, Timelike};
 use feed_rs::parser;
 use serde_json::Value;
 
 use crate::storage::{FeedItem, StoredSource, UserSettings, Digest, Category};
 
-const USER_AGENT: &str = "OVR-daily-digest/1.0";
-
-// ─── RSS/Atom Fetching ───
+const USER_AGENT: &str = "OVR-daily-digest/2.0";
 
 fn extract_image(entry: &feed_rs::model::Entry) -> Option<String> {
-    // 1. Media content (from media:content elements)
     for media in &entry.media {
         for content in &media.content {
             if let Some(url) = &content.url {
                 return Some(url.to_string());
             }
         }
-        // 2. Thumbnails (from media:thumbnail elements)
         if let Some(thumb) = media.thumbnails.first() {
             return Some(thumb.image.uri.clone());
         }
     }
-    // 3. Enclosure links with image MIME type
     for link in &entry.links {
         if link.rel.as_deref() == Some("enclosure") {
             if let Some(ref mt) = link.media_type {
@@ -60,9 +55,7 @@ fn fetch_rss(url: &str) -> Result<Vec<FeedItem>, String> {
             .map(|dt| dt.to_rfc3339())
             .unwrap_or_default();
         let description = entry.summary.as_ref().map(|s| s.content.clone())
-            .or_else(|| entry.content.as_ref().and_then(|c| {
-                c.body.clone()
-            }));
+            .or_else(|| entry.content.as_ref().and_then(|c| c.body.clone()));
         let image_url = extract_image(&entry).or_else(|| feed_icon.clone());
 
         Some(FeedItem {
@@ -82,8 +75,6 @@ fn fetch_rss(url: &str) -> Result<Vec<FeedItem>, String> {
 
     Ok(items)
 }
-
-// ─── JSON API Fetching ───
 
 fn fetch_json_api(url: &str, mapping: Option<&crate::storage::JsonMapping>) -> Result<Vec<FeedItem>, String> {
     let client = reqwest::blocking::Client::builder()
@@ -201,8 +192,6 @@ fn extract_generic_json(data: &Value) -> Vec<FeedItem> {
     }).collect()
 }
 
-// ─── Source Fetching ───
-
 fn fetch_source(source: &StoredSource) -> Result<Vec<FeedItem>, String> {
     let mut items = match source.transform_type.as_str() {
         "api-json" => fetch_json_api(&source.url, source.json_mapping.as_ref())?,
@@ -220,8 +209,6 @@ fn fetch_source(source: &StoredSource) -> Result<Vec<FeedItem>, String> {
 
     Ok(items)
 }
-
-// ─── Digest Generation ───
 
 fn get_hour_label() -> String {
     let now = Local::now();
@@ -257,7 +244,6 @@ pub fn generate_digest(settings: &UserSettings) -> Result<Digest, String> {
     let hour = get_hour_label();
 
     let enabled_cats: Vec<&Category> = settings.categories.iter().filter(|c| c.enabled).collect();
-    let cat_by_slug: HashMap<&str, &Category> = enabled_cats.iter().map(|c| (c.slug.as_str(), *c)).collect();
     let active_cat_ids: std::collections::HashSet<&str> = enabled_cats.iter().map(|c| c.id.as_str()).collect();
 
     let active_sources: Vec<&StoredSource> = settings.sources.iter()
@@ -308,16 +294,15 @@ pub fn generate_digest(settings: &UserSettings) -> Result<Digest, String> {
     }
 
     let digest = Digest {
-        date: date.clone(),
-        hour: hour.clone(),
+        date,
+        hour,
         generated_at: now.to_rfc3339(),
         sections: sections.into_iter().map(|(k, v)| (k, v)).collect(),
         categories: enabled_cats.into_iter().cloned().collect(),
         source_counts,
     };
 
-    eprintln!("[Aggregator] Digest saved: {}-{}", date, hour);
-
+    eprintln!("[Aggregator] Digest generated");
     Ok(digest)
 }
 
