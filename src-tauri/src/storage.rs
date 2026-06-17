@@ -119,12 +119,42 @@ pub struct TestItem {
 // ─── Data Directory ───
 
 fn get_data_dir() -> PathBuf {
+    // Portable mode: data directory next to the executable
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
-            return dir.join("data");
+            let path = dir.join("data");
+            if path.exists() || fs::create_dir_all(&path).is_ok() {
+                return path;
+            }
         }
     }
-    PathBuf::from("data")
+    // Fallback: OS-specific data directory (guaranteed writable)
+    os_data_dir()
+}
+
+#[cfg(target_os = "windows")]
+fn os_data_dir() -> PathBuf {
+    let base = std::env::var("APPDATA")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| PathBuf::from("data"));
+    base.join("ovr")
+}
+
+#[cfg(target_os = "macos")]
+fn os_data_dir() -> PathBuf {
+    let home = std::env::var("HOME").unwrap_or_else(|_| ".".into());
+    PathBuf::from(home)
+        .join("Library")
+        .join("Application Support")
+        .join("com.ovr.app")
+}
+
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
+fn os_data_dir() -> PathBuf {
+    let base = std::env::var("XDG_DATA_HOME")
+        .or_else(|_| std::env::var("HOME").map(|h| format!("{}/.local/share", h)))
+        .unwrap_or_else(|_| "data".into());
+    PathBuf::from(base).join("ovr")
 }
 
 fn ensure_data_dir() -> PathBuf {
