@@ -47,6 +47,10 @@ fn fetch_rss(url: &str) -> Result<Vec<FeedItem>, String> {
 
     let feed = parser::parse(content.as_bytes()).map_err(|e| e.to_string())?;
 
+    let feed_icon = feed.icon.as_ref()
+        .or(feed.logo.as_ref())
+        .map(|img| img.uri.clone());
+
     let items: Vec<FeedItem> = feed.entries.into_iter().filter_map(|entry| {
         let id = entry.id.to_string();
         let title = entry.title.as_ref().map(|t| t.content.clone()).unwrap_or_default();
@@ -54,12 +58,12 @@ fn fetch_rss(url: &str) -> Result<Vec<FeedItem>, String> {
         let published = entry.published.as_ref()
             .or(entry.updated.as_ref())
             .map(|dt| dt.to_rfc3339())
-            .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
+            .unwrap_or_default();
         let description = entry.summary.as_ref().map(|s| s.content.clone())
             .or_else(|| entry.content.as_ref().and_then(|c| {
                 c.body.clone()
             }));
-        let image_url = extract_image(&entry);
+        let image_url = extract_image(&entry).or_else(|| feed_icon.clone());
 
         Some(FeedItem {
             id,

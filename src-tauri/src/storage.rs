@@ -278,7 +278,20 @@ pub fn load_settings() -> UserSettings {
     match fs::read_to_string(&path) {
         Ok(data) => {
             match serde_json::from_str::<UserSettings>(&data) {
-                Ok(s) => s,
+                Ok(mut s) => {
+                    // Migrate Nitter sources to use "twitter-rss" transform type
+                    let mut migrated = false;
+                    for source in &mut s.sources {
+                        if source.url.contains("nitter.net") && source.transform_type == "rss" {
+                            source.transform_type = "twitter-rss".to_string();
+                            migrated = true;
+                        }
+                    }
+                    if migrated {
+                        let _ = save_settings(&s);
+                    }
+                    s
+                }
                 Err(_) => {
                     let seed = build_seed_settings();
                     let _ = save_settings(&seed);

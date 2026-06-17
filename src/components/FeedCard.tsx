@@ -9,8 +9,10 @@ function getYouTubeThumbnail(url: string): string | null {
 }
 
 function getTimeAgo(dateStr: string): string {
+  if (!dateStr) return ''
   const now = Date.now()
   const date = new Date(dateStr).getTime()
+  if (isNaN(date)) return ''
   const diff = now - date
   const mins = Math.floor(diff / 60000)
   if (mins < 1) return 'just now'

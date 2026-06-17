@@ -102,7 +102,9 @@ export default function HomeLoader({ onNavigate }: { onNavigate: (v: PageView) =
     const aImg = a.imageUrl ? 1 : 0
     const bImg = b.imageUrl ? 1 : 0
     if (bImg !== aImg) return bImg - aImg
-    return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+    const dateA = new Date(a.publishedAt).getTime() || 0
+    const dateB = new Date(b.publishedAt).getTime() || 0
+    return dateB - dateA
   }).slice(0, 3)
 
   const previewCount = 4
