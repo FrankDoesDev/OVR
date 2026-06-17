@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use chrono::{Local, Timelike};
 use feed_rs::parser;
+use futures::future::join_all;
 use serde_json::Value;
 
 use crate::storage::{FeedItem, StoredSource, UserSettings, Digest, Category};
@@ -30,15 +31,15 @@ fn extract_image(entry: &feed_rs::model::Entry) -> Option<String> {
     None
 }
 
-fn fetch_rss(url: &str) -> Result<Vec<FeedItem>, String> {
-    let client = reqwest::blocking::Client::builder()
+async fn fetch_rss(url: &str) -> Result<Vec<FeedItem>, String> {
+    let client = reqwest::Client::builder()
         .user_agent(USER_AGENT)
         .timeout(std::time::Duration::from_secs(15))
         .build()
         .map_err(|e| e.to_string())?;
 
-    let response = client.get(url).send().map_err(|e| e.to_string())?;
-    let content = response.text().map_err(|e| e.to_string())?;
+    let response = client.get(url).send().await.map_err(|e| e.to_string())?;
+    let content = response.text().await.map_err(|e| e.to_string())?;
 
     let feed = parser::parse(content.as_bytes()).map_err(|e| e.to_string())?;
 
@@ -76,8 +77,8 @@ fn fetch_rss(url: &str) -> Result<Vec<FeedItem>, String> {
     Ok(items)
 }
 
-fn fetch_json_api(url: &str, mapping: Option<&crate::storage::JsonMapping>) -> Result<Vec<FeedItem>, String> {
-    let client = reqwest::blocking::Client::builder()
+async fn fetch_json_api(url: &str, mapping: Option<&crate::storage::JsonMapping>) -> Result<Vec<FeedItem>, String> {
+    let client = reqwest::Client::builder()
         .user_agent(USER_AGENT)
         .timeout(std::time::Duration::from_secs(15))
         .build()
@@ -86,9 +87,10 @@ fn fetch_json_api(url: &str, mapping: Option<&crate::storage::JsonMapping>) -> R
     let response = client.get(url)
         .header("Accept", "application/json")
         .send()
+        .await
         .map_err(|e| e.to_string())?;
 
-    let data: Value = response.json().map_err(|e| e.to_string())?;
+    let data: Value = response.json().await.map_err(|e| e.to_string())?;
 
     let items = match mapping {
         Some(m) => extract_with_mapping(&data, m),
@@ -192,10 +194,10 @@ fn extract_generic_json(data: &Value) -> Vec<FeedItem> {
     }).collect()
 }
 
-fn fetch_source(source: &StoredSource) -> Result<Vec<FeedItem>, String> {
+async fn fetch_source(source: &StoredSource) -> Result<Vec<FeedItem>, String> {
     let mut items = match source.transform_type.as_str() {
-        "api-json" => fetch_json_api(&source.url, source.json_mapping.as_ref())?,
-        _ => fetch_rss(&source.url)?,
+        "api-json" => fetch_json_api(&source.url, source.json_mapping.as_ref()).await?,
+        _ => fetch_rss(&source.url).await?,
     };
 
     for item in &mut items {
@@ -236,7 +238,7 @@ fn sort_by_date(items: &mut Vec<FeedItem>) {
     });
 }
 
-pub fn generate_digest(settings: &UserSettings) -> Result<Digest, String> {
+pub async fn generate_digest(settings: &UserSettings) -> Result<Digest, String> {
     eprintln!("[Aggregator] Starting digest generation...");
 
     let now = Local::now();
@@ -252,9 +254,11 @@ pub fn generate_digest(settings: &UserSettings) -> Result<Digest, String> {
 
     let max_per_source = settings.max_items_per_source as usize;
 
-    let results: Vec<Result<Vec<FeedItem>, String>> = active_sources.iter()
+    let futures: Vec<_> = active_sources.iter()
         .map(|s| fetch_source(s))
         .collect();
+
+    let results = join_all(futures).await;
 
     let mut sections: HashMap<String, Vec<FeedItem>> = HashMap::new();
     for cat in &enabled_cats {
@@ -297,7 +301,7 @@ pub fn generate_digest(settings: &UserSettings) -> Result<Digest, String> {
         date,
         hour,
         generated_at: now.to_rfc3339(),
-        sections: sections.into_iter().map(|(k, v)| (k, v)).collect(),
+        sections,
         categories: enabled_cats.into_iter().cloned().collect(),
         source_counts,
     };
@@ -306,7 +310,7 @@ pub fn generate_digest(settings: &UserSettings) -> Result<Digest, String> {
     Ok(digest)
 }
 
-pub fn test_source(url: &str, source_type: &str) -> Result<Vec<FeedItem>, String> {
+pub async fn test_source(url: &str, source_type: &str) -> Result<Vec<FeedItem>, String> {
     let source = StoredSource {
         id: "test".into(),
         name: "Test".into(),
@@ -318,5 +322,5 @@ pub fn test_source(url: &str, source_type: &str) -> Result<Vec<FeedItem>, String
         transform_type: source_type.into(),
         json_mapping: None,
     };
-    fetch_source(&source)
+    fetch_source(&source).await
 }

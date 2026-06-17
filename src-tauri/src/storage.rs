@@ -303,7 +303,7 @@ pub fn save_digest(digest: &Digest) -> Result<String, String> {
     let path = digest_path(&digest.date, &digest.hour);
     let json = serde_json::to_string_pretty(digest).map_err(|e| e.to_string())?;
     fs::write(&path, json).map_err(|e| e.to_string())?;
-    Ok(path.file_name().unwrap().to_string_lossy().to_string())
+    Ok(path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default())
 }
 
 pub fn load_latest_digest() -> Option<Digest> {

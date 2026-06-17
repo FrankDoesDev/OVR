@@ -46,9 +46,10 @@ export default function FeedCard({
   const thumbnail = ytThumb || item.imageUrl;
   const isYouTube =
     item.url.includes("youtube.com") || item.url.includes("youtu.be");
-  const domain = item.url
-    ? new URL(item.url).hostname.replace("www.", "")
-    : "";
+  const domain = (() => {
+    try { return item.url ? new URL(item.url).hostname.replace("www.", "") : ""; }
+    catch { return ""; }
+  })();
   const [imgFailed, setImgFailed] = useState(false);
 
   return (

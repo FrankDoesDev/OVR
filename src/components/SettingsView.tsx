@@ -4,6 +4,7 @@ import {
   getSettings,
   saveSettings,
   addCategory,
+  updateCategory,
   deleteCategory,
   addSource,
   updateSource,
@@ -20,7 +21,6 @@ export default function SettingsView({
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  // Add source form
   const [newName, setNewName] = useState("");
   const [newUrl, setNewUrl] = useState("");
   const [newCategory, setNewCategory] = useState("");
@@ -29,7 +29,6 @@ export default function SettingsView({
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
 
-  // Add category form
   const [catName, setCatName] = useState("");
   const [catSlug, setCatSlug] = useState("");
 
@@ -37,9 +36,11 @@ export default function SettingsView({
     getSettings().then(setSettings).catch(console.error);
   }, []);
 
+  let messageTimeout: ReturnType<typeof setTimeout> | null = null;
   const showMessage = (msg: string) => {
+    if (messageTimeout) clearTimeout(messageTimeout);
     setMessage(msg);
-    setTimeout(() => setMessage(null), 3000);
+    messageTimeout = setTimeout(() => setMessage(null), 3000);
   };
 
   const handleSaveGeneral = async () => {
@@ -49,7 +50,7 @@ export default function SettingsView({
       await saveSettings(settings);
       onRefreshCategories();
       showMessage("Settings saved");
-    } catch (e) {
+    } catch {
       showMessage("Failed to save settings");
     }
     setSaving(false);
@@ -66,8 +67,18 @@ export default function SettingsView({
       setSettings(s);
       onRefreshCategories();
       showMessage("Category added");
-    } catch (e) {
+    } catch {
       showMessage("Failed to add category");
+    }
+  };
+
+  const handleToggleCategory = async (id: string, enabled: boolean) => {
+    try {
+      await updateCategory(id, { enabled });
+      const s = await getSettings();
+      setSettings(s);
+    } catch {
+      showMessage("Failed to update category");
     }
   };
 
@@ -78,7 +89,7 @@ export default function SettingsView({
       setSettings(s);
       onRefreshCategories();
       showMessage("Category deleted");
-    } catch (e) {
+    } catch {
       showMessage("Failed to delete category");
     }
   };
@@ -104,7 +115,7 @@ export default function SettingsView({
       const s = await getSettings();
       setSettings(s);
       showMessage("Source added");
-    } catch (e) {
+    } catch {
       showMessage("Failed to add source");
     }
   };
@@ -145,7 +156,7 @@ export default function SettingsView({
       } else {
         setTestResult(`Error: ${result.error}`);
       }
-    } catch (e) {
+    } catch {
       setTestResult("Test failed");
     }
     setTesting(false);
@@ -163,7 +174,7 @@ export default function SettingsView({
 
   return (
     <div className="pt-6 space-y-10 max-w-2xl">
-      <h1 className="text-3xl font-serif font-bold tracking-tight text-[var(--text-primary)] leading-[1.7]">
+      <h1 className="text-3xl font-serif font-bold tracking-tight text-[var(--text-primary)]">
         Settings
       </h1>
 
@@ -173,7 +184,6 @@ export default function SettingsView({
         </p>
       )}
 
-      {/* General */}
       <section>
         <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4 uppercase tracking-wider">
           General
@@ -185,11 +195,13 @@ export default function SettingsView({
             </span>
             <input
               type="number"
+              min={1}
+              max={100}
               value={settings.maxItemsPerSource}
               onChange={(e) =>
                 setSettings({
                   ...settings,
-                  maxItemsPerSource: parseInt(e.target.value) || 10,
+                  maxItemsPerSource: Math.max(1, parseInt(e.target.value) || 10),
                 })
               }
               className="w-20 px-2 py-1 text-xs text-right bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded text-[var(--text-primary)]"
@@ -199,17 +211,23 @@ export default function SettingsView({
             <span className="text-xs text-[var(--text-secondary)]">
               Refresh interval (hours)
             </span>
-            <input
-              type="number"
+            <select
               value={settings.refreshIntervalHours}
               onChange={(e) =>
                 setSettings({
                   ...settings,
-                  refreshIntervalHours: parseInt(e.target.value) || 6,
+                  refreshIntervalHours: parseInt(e.target.value),
                 })
               }
-              className="w-20 px-2 py-1 text-xs text-right bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded text-[var(--text-primary)]"
-            />
+              className="w-24 px-2 py-1 text-xs bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded text-[var(--text-primary)]"
+            >
+              <option value={1}>Every hour</option>
+              <option value={2}>Every 2 hours</option>
+              <option value={4}>Every 4 hours</option>
+              <option value={6}>Every 6 hours</option>
+              <option value={12}>Every 12 hours</option>
+              <option value={24}>Once daily</option>
+            </select>
           </label>
           <label className="flex items-center justify-between">
             <span className="text-xs text-[var(--text-secondary)]">
@@ -217,11 +235,13 @@ export default function SettingsView({
             </span>
             <input
               type="number"
+              min={1}
+              max={20}
               value={settings.homepagePreviewCount}
               onChange={(e) =>
                 setSettings({
                   ...settings,
-                  homepagePreviewCount: parseInt(e.target.value) || 4,
+                  homepagePreviewCount: Math.max(1, parseInt(e.target.value) || 4),
                 })
               }
               className="w-20 px-2 py-1 text-xs text-right bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded text-[var(--text-primary)]"
@@ -233,11 +253,13 @@ export default function SettingsView({
             </span>
             <input
               type="number"
+              min={1}
+              max={90}
               value={settings.maxItemAgeDays}
               onChange={(e) =>
                 setSettings({
                   ...settings,
-                  maxItemAgeDays: parseInt(e.target.value) || 2,
+                  maxItemAgeDays: Math.max(1, parseInt(e.target.value) || 2),
                 })
               }
               className="w-20 px-2 py-1 text-xs text-right bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded text-[var(--text-primary)]"
@@ -253,43 +275,42 @@ export default function SettingsView({
         </div>
       </section>
 
-      {/* Categories */}
       <section>
         <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4 uppercase tracking-wider">
           Categories
         </h2>
         <div className="space-y-2 mb-4">
-          {settings.categories.map((cat) => (
-            <div
-              key={cat.id}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-primary)]"
-            >
-              <span className="text-xs font-medium text-[var(--text-primary)] flex-1">
-                {cat.name}
-              </span>
-              <span className="text-[0.6rem] text-[var(--text-tertiary)] font-mono">
-                {cat.slug}
-              </span>
-              <button
-                onClick={() => handleDeleteCategory(cat.id)}
-                className="text-[var(--text-tertiary)] hover:text-red-500 transition-colors"
+          {[...settings.categories]
+            .sort((a, b) => a.order - b.order)
+            .map((cat) => (
+              <div
+                key={cat.id}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-primary)]"
               >
-                <svg
-                  className="w-3 h-3"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M6 18L18 6M6 6l12 12"
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={cat.enabled}
+                    onChange={(e) => handleToggleCategory(cat.id, e.target.checked)}
                   />
-                </svg>
-              </button>
-            </div>
-          ))}
+                  <div className="toggle-track" />
+                </label>
+                <span className={`text-xs font-medium flex-1 ${cat.enabled ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)] line-through"}`}>
+                  {cat.name}
+                </span>
+                <span className="text-[0.6rem] text-[var(--text-tertiary)] font-mono">
+                  {cat.slug}
+                </span>
+                <button
+                  onClick={() => handleDeleteCategory(cat.id)}
+                  className="text-[var(--text-tertiary)] hover:text-red-500 transition-colors"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ))}
         </div>
         <div className="flex gap-2">
           <input
@@ -315,13 +336,11 @@ export default function SettingsView({
         </div>
       </section>
 
-      {/* Sources */}
       <section>
         <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4 uppercase tracking-wider">
           Sources
         </h2>
 
-        {/* Add source form */}
         <div className="p-4 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-primary)] mb-4 space-y-3">
           <h3 className="text-xs font-semibold text-[var(--text-secondary)]">
             Add Source
@@ -347,7 +366,7 @@ export default function SettingsView({
               className="flex-1 px-3 py-2 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)]"
             >
               <option value="">Select category</option>
-              {settings.categories.map((cat) => (
+              {settings.categories.sort((a, b) => a.order - b.order).map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.name}
                 </option>
@@ -391,41 +410,24 @@ export default function SettingsView({
           )}
         </div>
 
-        {/* Source list */}
         <div className="space-y-1">
           {settings.sources.map((source) => (
             <div
               key={source.id}
               className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-primary)]"
             >
-              <button
-                onClick={() => handleToggleSource(source)}
-                className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                  source.enabled
-                    ? "bg-[var(--gaming)] border-[var(--gaming)]"
-                    : "border-[var(--border-primary)]"
-                }`}
-              >
-                {source.enabled && (
-                  <svg
-                    className="w-3 h-3 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                )}
-              </button>
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={source.enabled}
+                  onChange={() => handleToggleSource(source)}
+                />
+                <div className="toggle-track" />
+              </label>
               {source.icon && (
                 <span className="text-sm flex-shrink-0">{source.icon}</span>
               )}
-              <span className="text-xs text-[var(--text-primary)] flex-1 truncate">
+              <span className={`text-xs flex-1 truncate ${source.enabled ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)]"}`}>
                 {source.name}
               </span>
               <span className="text-[0.6rem] text-[var(--text-tertiary)] font-mono hidden sm:inline truncate max-w-[120px]">
@@ -435,18 +437,8 @@ export default function SettingsView({
                 onClick={() => handleDeleteSource(source.id)}
                 className="text-[var(--text-tertiary)] hover:text-red-500 transition-colors flex-shrink-0"
               >
-                <svg
-                  className="w-3 h-3"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>

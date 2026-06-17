@@ -140,19 +140,19 @@ pub fn list_archives() -> Result<Vec<ArchiveEntry>, String> {
 }
 
 #[tauri::command]
-pub fn generate_now(state: State<AppState>) -> Result<Digest, String> {
+pub async fn generate_now(state: State<'_, AppState>) -> Result<Digest, String> {
     let settings = {
         let s = state.settings.lock().map_err(|e| e.to_string())?;
         s.clone()
     };
-    let digest = feeds::generate_digest(&settings)?;
+    let digest = feeds::generate_digest(&settings).await?;
     storage::save_digest(&digest)?;
     Ok(digest)
 }
 
 #[tauri::command]
-pub fn test_source(url: String, source_type: String) -> Result<TestResult, String> {
-    match feeds::test_source(&url, &source_type) {
+pub async fn test_source(url: String, source_type: String) -> Result<TestResult, String> {
+    match feeds::test_source(&url, &source_type).await {
         Ok(items) => {
             let test_items: Vec<TestItem> = items.into_iter().take(3).enumerate().map(|(i, item)| {
                 TestItem { index: i, title: item.title, url: item.url }

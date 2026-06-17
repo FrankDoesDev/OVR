@@ -30,9 +30,10 @@ export default function TweetCard({
   item: FeedItem;
   index?: number;
 }) {
-  const domain = item.url
-    ? new URL(item.url).hostname.replace("www.", "")
-    : "";
+  const domain = (() => {
+    try { return item.url ? new URL(item.url).hostname.replace("www.", "") : ""; }
+    catch { return ""; }
+  })();
 
   return (
     <a
