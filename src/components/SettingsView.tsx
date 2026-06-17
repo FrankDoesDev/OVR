@@ -29,6 +29,11 @@ export default function SettingsView({
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
 
+  const [editingSourceId, setEditingSourceId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editUrl, setEditUrl] = useState("");
+  const [editCategoryId, setEditCategoryId] = useState("");
+
   const [catName, setCatName] = useState("");
   const [catSlug, setCatSlug] = useState("");
 
@@ -138,6 +143,37 @@ export default function SettingsView({
       showMessage("Source deleted");
     } catch {
       showMessage("Failed to delete source");
+    }
+  };
+
+  const handleStartEdit = (source: StoredSource) => {
+    setEditingSourceId(source.id);
+    setEditName(source.name);
+    setEditUrl(source.url);
+    setEditCategoryId(source.categoryId);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingSourceId(null);
+  };
+
+  const handleSaveEdit = async (id: string) => {
+    if (!editName.trim() || !editUrl.trim() || !editCategoryId) {
+      showMessage("Name, URL, and category are required");
+      return;
+    }
+    try {
+      await updateSource(id, {
+        name: editName.trim(),
+        url: editUrl.trim(),
+        categoryId: editCategoryId,
+      });
+      const s = await getSettings();
+      setSettings(s);
+      setEditingSourceId(null);
+      showMessage("Source updated");
+    } catch {
+      showMessage("Failed to update source");
     }
   };
 
@@ -411,38 +447,89 @@ export default function SettingsView({
         </div>
 
         <div className="space-y-1">
-          {settings.sources.map((source) => (
-            <div
-              key={source.id}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-primary)]"
-            >
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={source.enabled}
-                  onChange={() => handleToggleSource(source)}
-                />
-                <div className="toggle-track" />
-              </label>
-              {source.icon && (
-                <span className="text-sm flex-shrink-0">{source.icon}</span>
-              )}
-              <span className={`text-xs flex-1 truncate ${source.enabled ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)]"}`}>
-                {source.name}
-              </span>
-              <span className="text-[0.6rem] text-[var(--text-tertiary)] font-mono hidden sm:inline truncate max-w-[120px]">
-                {source.url}
-              </span>
-              <button
-                onClick={() => handleDeleteSource(source.id)}
-                className="text-[var(--text-tertiary)] hover:text-red-500 transition-colors flex-shrink-0"
+          {settings.sources.map((source) =>
+            editingSourceId === source.id ? (
+              <div
+                key={source.id}
+                className="flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-primary)]"
               >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          ))}
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Name"
+                  className="flex-1 min-w-[100px] px-2 py-1 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
+                />
+                <input
+                  type="text"
+                  value={editUrl}
+                  onChange={(e) => setEditUrl(e.target.value)}
+                  placeholder="URL"
+                  className="flex-1 min-w-[160px] px-2 py-1 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
+                />
+                <select
+                  value={editCategoryId}
+                  onChange={(e) => setEditCategoryId(e.target.value)}
+                  className="w-28 px-2 py-1 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)]"
+                >
+                  {settings.categories.sort((a, b) => a.order - b.order).map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => handleSaveEdit(source.id)}
+                  className="px-2 py-1 text-xs rounded border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={handleCancelEdit}
+                  className="px-2 py-1 text-xs rounded border border-[var(--border-primary)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div
+                key={source.id}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-primary)]"
+              >
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={source.enabled}
+                    onChange={() => handleToggleSource(source)}
+                  />
+                  <div className="toggle-track" />
+                </label>
+                {source.icon && (
+                  <span className="text-sm flex-shrink-0">{source.icon}</span>
+                )}
+                <span className={`text-xs flex-1 truncate ${source.enabled ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)]"}`}>
+                  {source.name}
+                </span>
+                <span className="text-[0.6rem] text-[var(--text-tertiary)] font-mono hidden sm:inline truncate max-w-[120px]">
+                  {source.url}
+                </span>
+                <button
+                  onClick={() => handleStartEdit(source)}
+                  className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors flex-shrink-0"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => handleDeleteSource(source.id)}
+                  className="text-[var(--text-tertiary)] hover:text-red-500 transition-colors flex-shrink-0"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )
+          )}
         </div>
       </section>
     </div>

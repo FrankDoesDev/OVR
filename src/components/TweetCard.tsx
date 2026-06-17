@@ -45,9 +45,17 @@ export default function TweetCard({
     >
       <div className="feed-card-body">
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-6 h-6 rounded-full bg-[var(--accent-dim)] flex items-center justify-center text-xs flex-shrink-0">
-            {item.icon || ""}
-          </div>
+          {item.imageUrl ? (
+            <img
+              src={item.imageUrl}
+              alt=""
+              className="w-6 h-6 rounded-full bg-[var(--bg-surface)] flex-shrink-0 object-cover"
+            />
+          ) : (
+            <div className="w-6 h-6 rounded-full bg-[var(--accent-dim)] flex items-center justify-center text-xs flex-shrink-0">
+              {item.icon || ""}
+            </div>
+          )}
           <div className="flex items-center gap-1.5 min-w-0">
             <span className="text-xs font-semibold text-[var(--text-primary)] truncate">
               {item.source}

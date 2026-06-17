@@ -194,10 +194,31 @@ fn extract_generic_json(data: &Value) -> Vec<FeedItem> {
     }).collect()
 }
 
+fn extract_nitter_username(url: &str) -> Option<String> {
+    let url = url.strip_suffix("/rss").unwrap_or(url);
+    let url = url.strip_suffix("/").unwrap_or(url);
+    let parts: Vec<&str> = url.split('/').collect();
+    if parts.len() >= 4 {
+        Some(parts[3].to_string())
+    } else {
+        None
+    }
+}
+
+fn nitter_profile_pic(username: &str) -> String {
+    format!("https://unavatar.io/twitter/{}", username)
+}
+
 async fn fetch_source(source: &StoredSource) -> Result<Vec<FeedItem>, String> {
     let mut items = match source.transform_type.as_str() {
         "api-json" => fetch_json_api(&source.url, source.json_mapping.as_ref()).await?,
         _ => fetch_rss(&source.url).await?,
+    };
+
+    let nitter_pic = if source.transform_type == "twitter-rss" {
+        extract_nitter_username(&source.url).map(|u| nitter_profile_pic(&u))
+    } else {
+        None
     };
 
     for item in &mut items {
@@ -206,6 +227,11 @@ async fn fetch_source(source: &StoredSource) -> Result<Vec<FeedItem>, String> {
         item.source_type = source.transform_type.clone();
         if let Some(icon) = &source.icon {
             item.icon = Some(icon.clone());
+        }
+        if let Some(ref pic) = nitter_pic {
+            if item.image_url.is_none() {
+                item.image_url = Some(pic.clone());
+            }
         }
     }
 

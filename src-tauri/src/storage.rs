@@ -176,77 +176,10 @@ fn generate_id() -> String {
     Uuid::new_v4().to_string()
 }
 
-fn build_seed_settings() -> UserSettings {
-    let gaming_id = generate_id();
-    let tech_id = generate_id();
-    let politics_id = generate_id();
-
-    let categories = vec![
-        Category { id: gaming_id.clone(), name: "Gaming".into(), slug: "gaming".into(), enabled: true, order: 0 },
-        Category { id: tech_id.clone(), name: "Tech".into(), slug: "tech".into(), enabled: true, order: 1 },
-        Category { id: politics_id.clone(), name: "Politics".into(), slug: "politics".into(), enabled: true, order: 2 },
-    ];
-
-    let cat_map: HashMap<&str, &str> = vec![
-        ("gaming", gaming_id.as_str()),
-        ("tech", tech_id.as_str()),
-        ("politics", politics_id.as_str()),
-    ].into_iter().collect();
-
-    let built_in_sources: Vec<(&str, &str, &str, &str, &str)> = vec![
-        ("Steam News", "gaming", "\u{1f3ae}", "rss", "https://store.steampowered.com/feeds/news.xml"),
-        ("Epic Free Games", "gaming", "\u{1f193}", "api-json", "https://epic-free-games.vercel.app/api/games"),
-        ("IGN", "gaming", "\u{1f3af}", "rss", "https://www.ign.com/rss/v2/articles/feed/rss"),
-        ("PC Gamer", "gaming", "\u{1f5a5}\u{fe0f}", "rss", "https://www.pcgamer.com/rss/feed/rss"),
-        ("Eurogamer", "gaming", "\u{1f1ea}\u{1f1fa}", "rss", "https://www.eurogamer.net/feed/news"),
-        ("PlayStation", "gaming", "\u{25b6}\u{fe0f}", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UC-2Y8dQb0S6DtpxNgAKoJKA"),
-        ("Xbox", "gaming", "\u{2716}\u{fe0f}", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCjBp_7RuDBUYbd1LegWEJ8g"),
-        ("OpenAI Blog", "tech", "\u{1f916}", "rss", "https://openai.com/news/rss.xml"),
-        ("Anthropic News", "tech", "\u{1f9e0}", "rss", "https://raw.githubusercontent.com/taobojlen/anthropic-rss-feed/main/anthropic_news_rss.xml"),
-        ("Hugging Face Blog", "tech", "\u{1f917}", "rss", "https://huggingface.co/blog/feed.xml"),
-        ("HF New Models", "tech", "\u{1f3d7}\u{fe0f}", "api-json", "https://huggingface.co/api/models?sort=createdAt&direction=-1&limit=20"),
-        ("Ars Technica AI", "tech", "\u{2699}\u{fe0f}", "rss", "https://arstechnica.com/ai/feed/"),
-        ("TechCrunch", "tech", "\u{1f52c}", "rss", "https://techcrunch.com/feed/"),
-        ("The Verge", "tech", "\u{26a1}", "rss", "https://www.theverge.com/rss/index.xml"),
-        ("SpaceX", "tech", "\u{1f680}", "rss", "https://www.teslarati.com/feed/"),
-        ("Spaceflight Now", "tech", "\u{1f4f0}", "rss", "https://spaceflightnow.com/feed/"),
-        ("NASA", "tech", "\u{1f30c}", "rss", "https://www.nasa.gov/feed/"),
-        ("Raspberry Pi", "tech", "\u{1f967}", "rss", "https://www.raspberrypi.com/news/feed/"),
-        ("Hacker News", "tech", "\u{2693}", "rss", "https://hnrss.org/frontpage"),
-        ("Ben's Bites", "tech", "\u{1f96a}", "rss", "https://www.bensbites.co/feed"),
-        ("The Rundown AI", "tech", "\u{1f4ec}", "rss", "https://www.therundown.ai/feed"),
-        ("DeepMind", "tech", "\u{1f52c}", "rss", "https://deepmind.google/blog/rss.xml"),
-        ("Linus Tech Tips", "tech", "\u{1f6e0}\u{fe0f}", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCxHKALcAjHZpGCKW-oSr_zg"),
-        ("TechLinked", "tech", "\u{1f517}", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCeeFfhMcJa1kjtfZAGskOCA"),
-        ("t3dotgg", "tech", "\u{1f4bb}", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCbRP3c757lWg9M-U7TyEkXA"),
-        ("ThrillSeeker", "tech", "\u{1f97d}", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCSbdMXOI_3HGiFviLZO6kNA"),
-        ("Fox News Politics", "politics", "\u{1f4fa}", "rss", "https://feeds.foxnews.com/foxnews/politics"),
-        ("NYT Politics", "politics", "\u{1f4f0}", "rss", "https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml"),
-        ("The Hill", "politics", "\u{26f0}\u{fe0f}", "rss", "https://thehill.com/feed/"),
-        ("Politico", "politics", "\u{1f3db}\u{fe0f}", "rss", "https://rss.politico.com/congress.xml"),
-        ("RealClearPolitics", "politics", "\u{1f4ca}", "rss", "https://www.realclearpolitics.com/index.xml"),
-        ("CNN Politics", "politics", "\u{1f4e1}", "rss", "http://rss.cnn.com/rss/cnn_allpolitics.rss"),
-        ("Asmongold", "politics", "\u{1f3ad}", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCQeRaTukNYft1_6AZPACnog"),
-        ("Sam Hyde", "politics", "\u{1f3aa}", "youtube-rss", "https://www.youtube.com/feeds/videos.xml?channel_id=UCfUaZ8Ra7m7BqUEACv2jySw"),
-    ];
-
-    let sources: Vec<StoredSource> = built_in_sources.iter().map(|(name, cat_slug, icon, transform, url)| {
-        StoredSource {
-            id: generate_id(),
-            name: name.to_string(),
-            category_id: cat_map[*cat_slug].to_string(),
-            source_type: if *transform == "api-json" { "api-json".into() } else { "rss".into() },
-            url: url.to_string(),
-            icon: Some(icon.to_string()),
-            enabled: true,
-            transform_type: transform.to_string(),
-            json_mapping: None,
-        }
-    }).collect();
-
+fn default_settings() -> UserSettings {
     UserSettings {
-        categories,
-        sources,
+        categories: vec![],
+        sources: vec![],
         max_items_per_source: 30,
         refresh_interval_hours: 6,
         homepage_preview_count: 4,
@@ -257,7 +190,7 @@ fn build_seed_settings() -> UserSettings {
 pub fn load_settings() -> UserSettings {
     let path = settings_path();
     if !path.exists() {
-        let seed = build_seed_settings();
+        let seed = default_settings();
         let _ = save_settings(&seed);
         return seed;
     }
@@ -278,14 +211,14 @@ pub fn load_settings() -> UserSettings {
                     s
                 }
                 Err(_) => {
-                    let seed = build_seed_settings();
+                    let seed = default_settings();
                     let _ = save_settings(&seed);
                     seed
                 }
             }
         }
         Err(_) => {
-            let seed = build_seed_settings();
+            let seed = default_settings();
             let _ = save_settings(&seed);
             seed
         }
