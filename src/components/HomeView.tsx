@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import type { PageView, Digest } from "../types";
 import { getLatestDigest, generateNow } from "../lib/api";
 import DigestSection from "./DigestSection";
-import LastUpdated from "./LastUpdated";
 import FeedCard from "./FeedCard";
 
 export default function HomeView({
@@ -127,28 +126,48 @@ export default function HomeView({
   return (
     <>
       <section className="mb-10">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <h1 className="text-3xl font-serif font-bold tracking-tight text-[var(--text-primary)] leading-[1.7]">
-              Today&rsquo;s Digest
-            </h1>
-            <p className="text-sm text-[var(--text-tertiary)] mt-1">
-              {new Date().toLocaleDateString("en-US", {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-                year: "numeric",
+        <div className="text-center mb-4">
+          <p className="text-3xl font-serif font-bold tracking-tight text-[var(--text-primary)] leading-[1.7]">
+            {new Date().toLocaleDateString("en-US", { weekday: "long" })}
+          </p>
+          <p className="text-sm text-[var(--text-tertiary)] mt-1">
+            {new Date().toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </p>
+          <div className="mt-3 flex items-center justify-center gap-3 text-xs text-[var(--text-tertiary)]">
+            <span className="font-mono">
+              {new Date(digest.generatedAt).toLocaleTimeString("en-US", {
+                hour: "2-digit",
+                minute: "2-digit",
               })}
-            </p>
+            </span>
+            <span className="opacity-30">&middot;</span>
+            <span className="font-mono">{Object.values(digest.sections).reduce((acc, items) => acc + items.length, 0)} items</span>
+            <span className="opacity-30">&middot;</span>
+            <button
+              onClick={handleManualRefresh}
+              disabled={refreshing}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-[var(--border-primary)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all font-mono disabled:opacity-50"
+            >
+              <svg
+                className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182"
+                />
+              </svg>
+              {refreshing ? "Refreshing..." : "Refresh"}
+            </button>
           </div>
-        </div>
-
-        <div className="mt-1 mb-6">
-          <LastUpdated
-            digest={digest}
-            onRefresh={handleManualRefresh}
-            refreshing={refreshing}
-          />
           {errorMessage && (
             <p className="text-xs text-red-500 mt-2 font-mono">
               {errorMessage}

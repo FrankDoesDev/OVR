@@ -209,23 +209,23 @@ export default function SettingsView({
   }
 
   return (
-    <div className="pt-6 space-y-10 max-w-2xl">
-      <h1 className="text-3xl font-serif font-bold tracking-tight text-[var(--text-primary)]">
+    <div className="pt-6 space-y-10 max-w-xl mx-auto">
+      <h1 className="text-3xl font-serif font-bold tracking-tight text-[var(--text-primary)] text-center">
         Settings
       </h1>
 
       {message && (
-        <p className="text-xs text-[var(--text-secondary)] bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded-lg px-4 py-2">
+        <p className="text-xs text-[var(--text-secondary)] bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded-lg px-4 py-2 text-center">
           {message}
         </p>
       )}
 
       <section>
-        <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4 uppercase tracking-wider">
+        <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4 uppercase tracking-wider text-center">
           General
         </h2>
-        <div className="space-y-4">
-          <label className="flex items-center justify-between">
+        <div className="rounded-lg bg-[var(--bg-surface)] border border-[var(--border-primary)] divide-y divide-[var(--border-primary)]">
+          <div className="flex items-center justify-between px-4 py-3">
             <span className="text-xs text-[var(--text-secondary)]">
               Items per source
             </span>
@@ -240,12 +240,12 @@ export default function SettingsView({
                   maxItemsPerSource: Math.max(1, parseInt(e.target.value) || 10),
                 })
               }
-              className="w-20 px-2 py-1 text-xs text-right bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded text-[var(--text-primary)]"
+              className="w-16 px-2 py-1 text-xs text-center bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-hover)]"
             />
-          </label>
-          <label className="flex items-center justify-between">
+          </div>
+          <div className="flex items-center justify-between px-4 py-3">
             <span className="text-xs text-[var(--text-secondary)]">
-              Refresh interval (hours)
+              Refresh interval
             </span>
             <select
               value={settings.refreshIntervalHours}
@@ -255,7 +255,7 @@ export default function SettingsView({
                   refreshIntervalHours: parseInt(e.target.value),
                 })
               }
-              className="w-24 px-2 py-1 text-xs bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded text-[var(--text-primary)]"
+              className="w-32 px-2 py-1 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-hover)]"
             >
               <option value={1}>Every hour</option>
               <option value={2}>Every 2 hours</option>
@@ -264,8 +264,8 @@ export default function SettingsView({
               <option value={12}>Every 12 hours</option>
               <option value={24}>Once daily</option>
             </select>
-          </label>
-          <label className="flex items-center justify-between">
+          </div>
+          <div className="flex items-center justify-between px-4 py-3">
             <span className="text-xs text-[var(--text-secondary)]">
               Homepage preview count
             </span>
@@ -280,31 +280,36 @@ export default function SettingsView({
                   homepagePreviewCount: Math.max(1, parseInt(e.target.value) || 4),
                 })
               }
-              className="w-20 px-2 py-1 text-xs text-right bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded text-[var(--text-primary)]"
+              className="w-16 px-2 py-1 text-xs text-center bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-hover)]"
             />
-          </label>
-          <label className="flex items-center justify-between">
+          </div>
+          <div className="flex items-center justify-between px-4 py-3">
             <span className="text-xs text-[var(--text-secondary)]">
-              Max item age (days)
+              Max item age
             </span>
-            <input
-              type="number"
-              min={1}
-              max={90}
-              value={settings.maxItemAgeDays}
-              onChange={(e) =>
-                setSettings({
-                  ...settings,
-                  maxItemAgeDays: Math.max(1, parseInt(e.target.value) || 2),
-                })
-              }
-              className="w-20 px-2 py-1 text-xs text-right bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded text-[var(--text-primary)]"
-            />
-          </label>
+            <div className="flex items-center gap-1.5">
+              <input
+                type="number"
+                min={1}
+                max={90}
+                value={settings.maxItemAgeDays}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    maxItemAgeDays: Math.max(1, parseInt(e.target.value) || 2),
+                  })
+                }
+                className="w-16 px-2 py-1 text-xs text-center bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-hover)]"
+              />
+              <span className="text-[0.65rem] text-[var(--text-tertiary)]">days</span>
+            </div>
+          </div>
+        </div>
+        <div className="mt-3 flex justify-center">
           <button
             onClick={handleSaveGeneral}
             disabled={saving}
-            className="px-4 py-2 text-xs rounded-lg border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all disabled:opacity-50"
+            className="px-6 py-2 text-xs rounded-lg border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save"}
           </button>
@@ -312,7 +317,7 @@ export default function SettingsView({
       </section>
 
       <section>
-        <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4 uppercase tracking-wider">
+        <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4 uppercase tracking-wider text-center">
           Categories
         </h2>
         <div className="space-y-2 mb-4">
@@ -354,14 +359,14 @@ export default function SettingsView({
             value={catName}
             onChange={(e) => setCatName(e.target.value)}
             placeholder="Category name"
-            className="flex-1 px-3 py-2 text-xs bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
+            className="flex-1 px-3 py-2 text-xs bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--border-hover)]"
           />
           <input
             type="text"
             value={catSlug}
             onChange={(e) => setCatSlug(e.target.value)}
             placeholder="slug (optional)"
-            className="w-28 px-3 py-2 text-xs bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
+            className="w-28 px-3 py-2 text-xs bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--border-hover)]"
           />
           <button
             onClick={handleAddCategory}
@@ -373,7 +378,7 @@ export default function SettingsView({
       </section>
 
       <section>
-        <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4 uppercase tracking-wider">
+        <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4 uppercase tracking-wider text-center">
           Sources
         </h2>
 
@@ -386,20 +391,20 @@ export default function SettingsView({
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Source name"
-            className="w-full px-3 py-2 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
+            className="w-full px-3 py-2 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--border-hover)]"
           />
           <input
             type="text"
             value={newUrl}
             onChange={(e) => setNewUrl(e.target.value)}
             placeholder="Feed URL"
-            className="w-full px-3 py-2 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
+            className="w-full px-3 py-2 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--border-hover)]"
           />
           <div className="flex gap-2">
             <select
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
-              className="flex-1 px-3 py-2 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)]"
+              className="flex-1 px-3 py-2 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-hover)]"
             >
               <option value="">Select category</option>
               {settings.categories.sort((a, b) => a.order - b.order).map((cat) => (
@@ -411,7 +416,7 @@ export default function SettingsView({
             <select
               value={newTransform}
               onChange={(e) => setNewTransform(e.target.value)}
-              className="w-28 px-3 py-2 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)]"
+              className="w-28 px-3 py-2 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-hover)]"
             >
               <option value="rss">RSS</option>
               <option value="api-json">JSON API</option>
@@ -424,7 +429,7 @@ export default function SettingsView({
             value={newIcon}
             onChange={(e) => setNewIcon(e.target.value)}
             placeholder="Icon emoji (optional)"
-            className="w-full px-3 py-2 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
+            className="w-full px-3 py-2 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--border-hover)]"
           />
           <div className="flex gap-2">
             <button
@@ -459,12 +464,12 @@ export default function SettingsView({
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     placeholder="Name"
-                    className="flex-1 px-2 py-1.5 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
+                    className="flex-1 px-2 py-1.5 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--border-hover)]"
                   />
                   <select
                     value={editCategoryId}
                     onChange={(e) => setEditCategoryId(e.target.value)}
-                    className="w-28 px-2 py-1.5 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)]"
+                    className="w-28 px-2 py-1.5 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-hover)]"
                   >
                     {settings.categories.sort((a, b) => a.order - b.order).map((cat) => (
                       <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -476,7 +481,7 @@ export default function SettingsView({
                   value={editUrl}
                   onChange={(e) => setEditUrl(e.target.value)}
                   placeholder="Feed URL"
-                  className="w-full px-2 py-1.5 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
+                  className="w-full px-2 py-1.5 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--border-hover)]"
                 />
                 <div className="flex justify-end gap-2">
                   <button
