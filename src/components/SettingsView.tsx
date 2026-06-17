@@ -451,43 +451,47 @@ export default function SettingsView({
             editingSourceId === source.id ? (
               <div
                 key={source.id}
-                className="flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-primary)]"
+                className="px-3 py-3 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-hover)] space-y-2"
               >
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  placeholder="Name"
-                  className="flex-1 min-w-[100px] px-2 py-1 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Name"
+                    className="flex-1 px-2 py-1.5 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
+                  />
+                  <select
+                    value={editCategoryId}
+                    onChange={(e) => setEditCategoryId(e.target.value)}
+                    className="w-28 px-2 py-1.5 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)]"
+                  >
+                    {settings.categories.sort((a, b) => a.order - b.order).map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
                 <input
                   type="text"
                   value={editUrl}
                   onChange={(e) => setEditUrl(e.target.value)}
-                  placeholder="URL"
-                  className="flex-1 min-w-[160px] px-2 py-1 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
+                  placeholder="Feed URL"
+                  className="w-full px-2 py-1.5 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
                 />
-                <select
-                  value={editCategoryId}
-                  onChange={(e) => setEditCategoryId(e.target.value)}
-                  className="w-28 px-2 py-1 text-xs bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded text-[var(--text-primary)]"
-                >
-                  {settings.categories.sort((a, b) => a.order - b.order).map((cat) => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
-                <button
-                  onClick={() => handleSaveEdit(source.id)}
-                  className="px-2 py-1 text-xs rounded border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={handleCancelEdit}
-                  className="px-2 py-1 text-xs rounded border border-[var(--border-primary)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all"
-                >
-                  Cancel
-                </button>
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={handleCancelEdit}
+                    className="px-3 py-1.5 text-xs rounded border border-[var(--border-primary)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleSaveEdit(source.id)}
+                    className="px-3 py-1.5 text-xs rounded border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all"
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
             ) : (
               <div

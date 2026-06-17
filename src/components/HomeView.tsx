@@ -27,6 +27,7 @@ export default function HomeView({
           try {
             const newDigest = await generateNow();
             setDigest(newDigest);
+            setErrorMessage(null);
           } catch (e) {
             const msg =
               typeof e === "string"
@@ -58,6 +59,7 @@ export default function HomeView({
     try {
       const newDigest = await generateNow();
       setDigest(newDigest);
+      setErrorMessage(null);
     } catch (e) {
       const msg =
         typeof e === "string"
@@ -147,6 +149,11 @@ export default function HomeView({
             onRefresh={handleManualRefresh}
             refreshing={refreshing}
           />
+          {errorMessage && (
+            <p className="text-xs text-red-500 mt-2 font-mono">
+              {errorMessage}
+            </p>
+          )}
         </div>
 
         {topItems.length > 0 && (
