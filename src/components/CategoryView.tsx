@@ -8,17 +8,19 @@ export default function CategoryView({ slug }: { slug: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getLatestDigest().then((d) => {
-      if (d) {
-        setDigest(d);
-        setLoading(false);
-      } else {
-        generateNow()
-          .then(setDigest)
-          .catch(console.error)
-          .finally(() => setLoading(false));
-      }
-    });
+    getLatestDigest()
+      .then((d) => {
+        if (d) {
+          setDigest(d);
+          setLoading(false);
+        } else {
+          generateNow()
+            .then(setDigest)
+            .catch(console.error)
+            .finally(() => setLoading(false));
+        }
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   if (loading) {

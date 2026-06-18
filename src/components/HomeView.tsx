@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { PageView, Digest } from "../types";
-import { getLatestDigest, generateNow } from "../lib/api";
+import { getLatestDigest, generateNow, getSettings } from "../lib/api";
 import DigestSection from "./DigestSection";
 import FeedCard from "./FeedCard";
 
@@ -10,12 +10,16 @@ export default function HomeView({
   onNavigate: (v: PageView) => void;
 }) {
   const [digest, setDigest] = useState<Digest | null>(null);
+  const [previewCount, setPreviewCount] = useState(4);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    getSettings()
+      .then((s) => setPreviewCount(s.homepagePreviewCount))
+      .catch(() => {});
     getLatestDigest()
       .then(async (d) => {
         if (d) {
@@ -109,6 +113,25 @@ export default function HomeView({
   const allItems = enabledCats.flatMap(
     (cat) => digest.sections[cat.slug] || [],
   );
+
+  if (enabledCats.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <p className="text-3xl font-serif font-bold tracking-tight text-[var(--text-primary)] leading-[1.7] mb-4">
+          {new Date().toLocaleDateString("en-US", { weekday: "long" })}
+        </p>
+        <p className="text-sm text-[var(--text-tertiary)] mb-6 max-w-md leading-relaxed">
+          No categories yet. Add some in Settings to start your digest.
+        </p>
+        <button
+          onClick={() => onNavigate({ type: "settings" })}
+          className="px-4 py-2 text-sm rounded-lg border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-hover)] transition-all"
+        >
+          Open Settings
+        </button>
+      </div>
+    );
+  }
   const articleItems = allItems.filter((i) => i.sourceType !== "twitter-rss");
   const topItems = articleItems
     .sort((a, b) => {
@@ -120,8 +143,6 @@ export default function HomeView({
       return dateB - dateA;
     })
     .slice(0, 3);
-
-  const previewCount = 4;
 
   return (
     <>

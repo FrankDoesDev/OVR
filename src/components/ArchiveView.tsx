@@ -59,7 +59,7 @@ export default function ArchiveView({
               month: "short",
               day: "numeric",
             });
-            const firstHour = hours.sort((a, b) => b.hour.localeCompare(a.hour))[0];
+            const firstHour = [...hours].sort((a, b) => b.hour.localeCompare(a.hour))[0];
 
             return (
               <button

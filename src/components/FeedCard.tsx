@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { FeedItem } from "../types";
+import { stripHtml, getTimeAgo } from "../lib/utils";
 
 function getYouTubeThumbnail(url: string): string | null {
   const match = url.match(
@@ -8,29 +9,6 @@ function getYouTubeThumbnail(url: string): string | null {
   return match
     ? `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg`
     : null;
-}
-
-function getTimeAgo(dateStr: string): string {
-  if (!dateStr) return "";
-  const now = Date.now();
-  const date = new Date(dateStr).getTime();
-  if (isNaN(date)) return "";
-  const diff = now - date;
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d`;
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").replace(/&[^;]+;/g, " ").trim();
 }
 
 export default function FeedCard({

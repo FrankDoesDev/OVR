@@ -53,7 +53,7 @@ export default function ArchiveDateView({
   }
 
   const displayDate = new Date(date + "T12:00:00");
-  const hourLabel = `${parseInt(hour)}:00`;
+  const hourLabel = `${hour.padStart(2, "0")}:00`;
 
   return (
     <div className="pt-6">

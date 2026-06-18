@@ -1,27 +1,5 @@
 import type { FeedItem } from "../types";
-
-function getTimeAgo(dateStr: string): string {
-  if (!dateStr) return "";
-  const now = Date.now();
-  const date = new Date(dateStr).getTime();
-  if (isNaN(date)) return "";
-  const diff = now - date;
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d`;
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").replace(/&[^;]+;/g, " ").trim();
-}
+import { stripHtml, getTimeAgo } from "../lib/utils";
 
 export default function TweetCard({
   item,

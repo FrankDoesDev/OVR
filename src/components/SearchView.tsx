@@ -1,25 +1,26 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Digest, FeedItem } from "../types";
 import { getLatestDigest, generateNow } from "../lib/api";
+import { stripHtml } from "../lib/utils";
 import FeedCard from "./FeedCard";
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").replace(/&[^;]+;/g, " ").trim();
-}
 
 export default function SearchView() {
   const [query, setQuery] = useState("");
   const [digest, setDigest] = useState<Digest | null>(null);
+  const [loading, setLoading] = useState(true);
   const [results, setResults] = useState<FeedItem[]>([]);
 
   useEffect(() => {
-    getLatestDigest().then((d) => {
-      if (d) {
-        setDigest(d);
-      } else {
-        generateNow().then(setDigest).catch(console.error);
-      }
-    });
+    getLatestDigest()
+      .then((d) => {
+        if (d) {
+          setDigest(d);
+        } else {
+          generateNow().then(setDigest).catch(console.error);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
   const doSearch = useCallback(
@@ -68,25 +69,32 @@ export default function SearchView() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search articles, sources, or topics..."
-          className="w-full pl-10 pr-4 py-3 text-sm bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--border-hover)] transition-colors"
+          placeholder={loading ? "Loading digest..." : "Search articles, sources, or topics..."}
+          disabled={loading}
+          className="w-full pl-10 pr-4 py-3 text-sm bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--border-hover)] transition-colors disabled:opacity-50"
           autoFocus
         />
       </div>
 
-      {query && results.length > 0 && (
+      {loading && (
+        <div className="flex items-center justify-center min-h-[20vh]">
+          <p className="text-sm text-[var(--text-tertiary)] font-mono">Loading digest...</p>
+        </div>
+      )}
+
+      {!loading && query && results.length > 0 && (
         <p className="text-xs text-[var(--text-tertiary)] mb-4 font-mono">
           {results.length} result{results.length !== 1 ? "s" : ""}
         </p>
       )}
 
-      {results.length > 0 ? (
+      {!loading && results.length > 0 ? (
         <div className="section-grid">
           {results.map((item, i) => (
             <FeedCard key={item.id} item={item} index={i} />
           ))}
         </div>
-      ) : query ? (
+      ) : !loading && query ? (
         <div className="flex flex-col items-center justify-center min-h-[30vh] text-center">
           <p className="text-sm text-[var(--text-tertiary)]">
             No results for &ldquo;{query}&rdquo;

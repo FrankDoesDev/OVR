@@ -24,7 +24,9 @@ pub fn save_settings(state: State<AppState>, settings: UserSettings) -> Result<(
 
 #[tauri::command]
 pub fn add_category(state: State<AppState>, name: String, slug: Option<String>, enabled: Option<bool>) -> Result<storage::Category, String> {
-    let slug = slug.unwrap_or_else(|| {
+    let mut settings = state.settings.lock().map_err(|e| e.to_string())?;
+
+    let mut slug = slug.unwrap_or_else(|| {
         name.to_lowercase()
             .chars()
             .map(|c| if c.is_alphanumeric() { c } else { '-' })
@@ -33,7 +35,21 @@ pub fn add_category(state: State<AppState>, name: String, slug: Option<String>, 
             .to_string()
     });
 
-    let mut settings = state.settings.lock().map_err(|e| e.to_string())?;
+    if slug.is_empty() {
+        slug = "category".into();
+    }
+
+    let existing_slugs: Vec<&str> = settings.categories.iter().map(|c| c.slug.as_str()).collect();
+    if existing_slugs.contains(&slug.as_str()) {
+        let mut candidate = format!("{}-2", slug);
+        let mut n = 3u32;
+        while existing_slugs.contains(&candidate.as_str()) {
+            candidate = format!("{}-{}", slug, n);
+            n += 1;
+        }
+        slug = candidate;
+    }
+
     let id = uuid::Uuid::new_v4().to_string();
     let order = settings.categories.len() as i32;
 
@@ -73,6 +89,8 @@ pub fn delete_category(state: State<AppState>, id: String) -> Result<(), String>
                 source.category_id = first_id.clone();
             }
         }
+    } else {
+        settings.sources.retain(|s| s.category_id != id);
     }
     storage::save_settings(&settings)?;
     Ok(())
@@ -105,10 +123,15 @@ pub fn add_source(state: State<AppState>, name: String, url: String, category_id
 #[tauri::command]
 pub fn update_source(state: State<AppState>, id: String, name: Option<String>, url: Option<String>, category_id: Option<String>, icon: Option<String>, enabled: Option<bool>) -> Result<(), String> {
     let mut settings = state.settings.lock().map_err(|e| e.to_string())?;
+    if let Some(ref c) = category_id {
+        if !settings.categories.iter().any(|cat| &cat.id == c) {
+            return Err(format!("Category {} does not exist", c));
+        }
+    }
     if let Some(source) = settings.sources.iter_mut().find(|s| s.id == id) {
+        if let Some(c) = category_id { source.category_id = c; }
         if let Some(n) = name { source.name = n; }
         if let Some(u) = url { source.url = u; }
-        if let Some(c) = category_id { source.category_id = c; }
         if let Some(i) = icon { source.icon = Some(i); }
         if let Some(e) = enabled { source.enabled = e; }
     }

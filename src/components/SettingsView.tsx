@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { UserSettings, StoredSource } from "../types";
 import {
   getSettings,
@@ -36,16 +36,71 @@ export default function SettingsView({
 
   const [catName, setCatName] = useState("");
   const [catSlug, setCatSlug] = useState("");
+  const [dragCatId, setDragCatId] = useState<string | null>(null);
+  const [dragOverCatId, setDragOverCatId] = useState<string | null>(null);
+
+  const messageTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     getSettings().then(setSettings).catch(console.error);
+    return () => {
+      if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
+    };
   }, []);
 
-  let messageTimeout: ReturnType<typeof setTimeout> | null = null;
   const showMessage = (msg: string) => {
-    if (messageTimeout) clearTimeout(messageTimeout);
+    if (messageTimeoutRef.current) clearTimeout(messageTimeoutRef.current);
     setMessage(msg);
-    messageTimeout = setTimeout(() => setMessage(null), 3000);
+    messageTimeoutRef.current = setTimeout(() => setMessage(null), 3000);
+  };
+
+  const handleDragStart = (e: React.DragEvent, catId: string) => {
+    setDragCatId(catId);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, catId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverCatId(catId);
+  };
+
+  const handleDrop = async (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    setDragOverCatId(null);
+    if (!dragCatId || dragCatId === targetId || !settings) {
+      setDragCatId(null);
+      return;
+    }
+
+    const cats = [...settings.categories].sort((a, b) => a.order - b.order);
+    const fromIdx = cats.findIndex((c) => c.id === dragCatId);
+    const toIdx = cats.findIndex((c) => c.id === targetId);
+    if (fromIdx === -1 || toIdx === -1) {
+      setDragCatId(null);
+      return;
+    }
+
+    const [moved] = cats.splice(fromIdx, 1);
+    cats.splice(toIdx, 0, moved);
+    const reordered = cats.map((c, i) => ({ ...c, order: i }));
+
+    setSettings({ ...settings, categories: reordered });
+    setDragCatId(null);
+
+    try {
+      for (const cat of reordered) {
+        await updateCategory(cat.id, { order: cat.order });
+      }
+      onRefreshCategories();
+    } catch {
+      showMessage("Failed to reorder categories");
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDragCatId(null);
+    setDragOverCatId(null);
   };
 
   const handleSaveGeneral = async () => {
@@ -88,6 +143,7 @@ export default function SettingsView({
   };
 
   const handleDeleteCategory = async (id: string) => {
+    if (!window.confirm("Delete this category? Sources in it will be removed if it's the last category.")) return;
     try {
       await deleteCategory(id);
       const s = await getSettings();
@@ -136,6 +192,7 @@ export default function SettingsView({
   };
 
   const handleDeleteSource = async (id: string) => {
+    if (!window.confirm("Delete this source?")) return;
     try {
       await deleteSource(id);
       const s = await getSettings();
@@ -197,6 +254,9 @@ export default function SettingsView({
     }
     setTesting(false);
   };
+
+  const getCatName = (catId: string) =>
+    settings?.categories.find((c) => c.id === catId)?.name ?? "Unknown";
 
   if (!settings) {
     return (
@@ -326,8 +386,24 @@ export default function SettingsView({
             .map((cat) => (
               <div
                 key={cat.id}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-primary)]"
+                draggable
+                onDragStart={(e) => handleDragStart(e, cat.id)}
+                onDragOver={(e) => handleDragOver(e, cat.id)}
+                onDrop={(e) => handleDrop(e, cat.id)}
+                onDragEnd={handleDragEnd}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg bg-[var(--bg-surface)] border transition-all ${
+                  dragOverCatId === cat.id
+                    ? "border-[var(--accent, var(--tech))] border-dashed"
+                    : dragCatId === cat.id
+                      ? "opacity-50 border-[var(--border-hover)]"
+                      : "border-[var(--border-primary)]"
+                }`}
               >
+                <span className="text-[var(--text-tertiary)] cursor-grab active:cursor-grabbing flex-shrink-0">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 9h16.5m-16.5 6.75h16.5" />
+                  </svg>
+                </span>
                 <label className="toggle-switch">
                   <input
                     type="checkbox"
@@ -516,6 +592,9 @@ export default function SettingsView({
                 )}
                 <span className={`text-xs flex-1 truncate ${source.enabled ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)]"}`}>
                   {source.name}
+                </span>
+                <span className="text-[0.6rem] px-1.5 py-0.5 rounded bg-[var(--bg-primary)] text-[var(--text-tertiary)] font-mono hidden sm:inline">
+                  {getCatName(source.categoryId)}
                 </span>
                 <span className="text-[0.6rem] text-[var(--text-tertiary)] font-mono hidden sm:inline truncate max-w-[120px]">
                   {source.url}

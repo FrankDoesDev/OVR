@@ -6,6 +6,7 @@ import SearchView from "./components/SearchView";
 import SettingsView from "./components/SettingsView";
 import ArchiveView from "./components/ArchiveView";
 import ArchiveDateView from "./components/ArchiveDateView";
+import BackToTop from "./components/BackToTop";
 import { getSettings } from "./lib/api";
 import type { PageView, NavCategory } from "./types";
 
@@ -34,6 +35,33 @@ export default function App() {
     refreshCategories();
   }, [refreshCategories]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        navigate({ type: "search" });
+      }
+      if (e.key === "/" && !e.ctrlKey && !e.metaKey) {
+        const target = e.target as HTMLElement;
+        if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+        e.preventDefault();
+        navigate({ type: "search" });
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible" && view.type === "home") {
+        refreshCategories();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [view.type, refreshCategories]);
+
   return (
     <>
       <Navbar
@@ -60,6 +88,7 @@ export default function App() {
           />
         )}
       </main>
+      <BackToTop />
     </>
   );
 }
